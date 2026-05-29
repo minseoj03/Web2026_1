@@ -5,7 +5,7 @@
  */
 
 export default function MoviePosterCard({ movie, type = 'watched', onClick, onRecommend, onMenu }) {
-  const { title, genre, rating, date, addedDate, review, gradient } = movie
+  const { title, genre, rating, date, addedDate, review, gradient, posterPath } = movie
 
   return (
     <div
@@ -13,7 +13,16 @@ export default function MoviePosterCard({ movie, type = 'watched', onClick, onRe
       className="shrink-0 w-[calc((100%-64px)/5)] min-w-[clamp(100px,10vw,130px)] max-lg:w-[calc((100%-32px)/3)] max-md:w-[calc((100%-16px)/2.5)] max-md:min-w-[clamp(90px,9vw,110px)] group cursor-pointer hover:-translate-y-1 transition"
     >
       <div className={`aspect-[2/3] rounded-xl bg-gradient-to-br ${gradient || 'from-gray-400 to-gray-600'} grid place-items-center text-white font-extrabold text-sm p-3 text-center shadow-sm mb-2 relative overflow-hidden`}>
-        {title.length > 8 ? title.slice(0, 8) + '...' : title}
+        {posterPath ? (
+          <img
+            src={posterPath}
+            alt={title}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          title.length > 8 ? title.slice(0, 8) + '...' : title
+        )}
 
         {/* Recommend button */}
         <button

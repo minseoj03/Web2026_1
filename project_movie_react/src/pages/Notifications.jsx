@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../services/notificationApi'
+import { useEffect, useState } from 'react'
+import MovieDetailModal from '../components/MovieDetailModal'
 import { resolveNotification } from '../notifications/template'
+import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../services/notificationApi'
 
-// Skeleton
 function NotificationSkeleton() {
   return (
     <div className="flex items-center gap-3.5 p-5 max-md:p-4 rounded-2xl border border-gray-100 animate-pulse">
@@ -20,12 +20,13 @@ function NotificationSkeleton() {
   )
 }
 
-// Notification Card (템플릿 기반)
-function NotificationCard({ notif, onMarkRead }) {
+function NotificationCard({ notif, onMarkRead, onMovieClick }) {
   const resolved = resolveNotification(notif)
 
   return (
-    <div className={`flex items-center gap-3.5 p-5 max-md:p-4 rounded-2xl max-md:rounded-xl border transition ${notif.read ? 'opacity-55 border-gray-200' : 'border-[#9b85ff] bg-gradient-to-r from-[#faf8ff] to-white shadow-sm'}`}>
+    <div className={`flex items-center gap-3.5 p-5 max-md:p-4 rounded-2xl max-md:rounded-xl border transition ${
+      notif.read ? 'opacity-55 border-gray-200' : 'border-[#9b85ff] bg-gradient-to-r from-[#faf8ff] to-white shadow-sm'
+    }`}>
       <div className={`w-11 h-11 max-md:w-9 max-md:h-9 rounded-full ${resolved.bgColor} grid place-items-center text-xl max-md:text-lg shrink-0`}>
         {resolved.icon}
       </div>
@@ -34,15 +35,27 @@ function NotificationCard({ notif, onMarkRead }) {
         <p className="text-sm max-md:text-xs font-bold mb-0.5 truncate">{resolved.title}</p>
         <p className="text-xs max-md:text-[11px] text-gray-500 truncate">{resolved.desc}</p>
         {resolved.hasMovie && notif.movie && (
-          <div className="flex items-center gap-2.5 p-2.5 max-md:p-2 bg-gray-100 rounded-lg mt-2.5">
-            <div className={`w-10 max-md:w-8 h-14 max-md:h-11 rounded-md bg-gradient-to-br ${notif.movie.gradient} grid place-items-center text-white text-[8px] font-bold shrink-0`}>
-              {notif.movie.title.slice(0, 3)}
-            </div>
+          <button
+            onClick={() => onMovieClick(notif.movie)}
+            className="w-full flex items-center gap-2.5 p-2.5 max-md:p-2 bg-gray-100 rounded-lg mt-2.5 text-left hover:bg-[#f3f0ff] transition"
+          >
+            {notif.movie.posterPath ? (
+              <img
+                src={notif.movie.posterPath}
+                alt={notif.movie.title}
+                className="w-10 max-md:w-8 h-14 max-md:h-11 rounded-md object-cover shrink-0"
+                loading="lazy"
+              />
+            ) : (
+              <div className={`w-10 max-md:w-8 h-14 max-md:h-11 rounded-md bg-gradient-to-br ${notif.movie.gradient} grid place-items-center text-white text-[8px] font-bold shrink-0`}>
+                {notif.movie.title.slice(0, 3)}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="text-sm max-md:text-xs font-bold truncate">{notif.movie.title}</p>
-              <p className="text-[11px] max-md:text-[10px] text-gray-500">{notif.movie.genre} · ⭐ {notif.movie.rating}</p>
+              <p className="text-[11px] max-md:text-[10px] text-gray-500">{notif.movie.genre} · ★ {notif.movie.rating}</p>
             </div>
-          </div>
+          </button>
         )}
       </div>
       <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -64,6 +77,7 @@ export default function Notifications() {
   const [tab, setTab] = useState('recommend')
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedMovie, setSelectedMovie] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -72,10 +86,9 @@ export default function Notifications() {
       .finally(() => setLoading(false))
   }, [])
 
-  // 카테고리별 필터 (template의 category 사용)
   const filterByCategory = (category) => {
-    return notifications.filter(n => {
-      const resolved = resolveNotification(n)
+    return notifications.filter(notification => {
+      const resolved = resolveNotification(notification)
       return resolved.category === category
     })
   }
@@ -83,17 +96,16 @@ export default function Notifications() {
   const recommendList = filterByCategory('recommend')
   const generalList = filterByCategory('general')
   const currentList = tab === 'recommend' ? recommendList : generalList
-
-  const unreadCount = (list) => list.filter(n => !n.read).length
+  const unreadCount = (list) => list.filter(notification => !notification.read).length
 
   const handleMarkRead = async (id) => {
     await markNotificationRead(id)
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    setNotifications(prev => prev.map(notification => notification.id === id ? { ...notification, read: true } : notification))
   }
 
   const handleMarkAllRead = async () => {
     await markAllNotificationsRead()
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })))
   }
 
   return (
@@ -111,37 +123,54 @@ export default function Notifications() {
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-0 border-b border-gray-200 mb-5">
         {[
           { id: 'recommend', label: '추천 알림', list: recommendList },
           { id: 'general', label: '일반', list: generalList },
-        ].map(t => (
+        ].map(item => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-5 max-md:px-3 py-3 text-sm max-md:text-xs font-semibold border-b-2 -mb-px transition ${tab === t.id ? 'text-[#7c5cff] border-[#7c5cff]' : 'text-gray-400 border-transparent hover:text-gray-700'}`}
+            key={item.id}
+            onClick={() => setTab(item.id)}
+            className={`px-5 max-md:px-3 py-3 text-sm max-md:text-xs font-semibold border-b-2 -mb-px transition ${
+              tab === item.id ? 'text-[#7c5cff] border-[#7c5cff]' : 'text-gray-400 border-transparent hover:text-gray-700'
+            }`}
           >
-            {t.label}
-            {unreadCount(t.list) > 0 && (
+            {item.label}
+            {unreadCount(item.list) > 0 && (
               <span className="ml-1.5 min-w-[18px] h-[18px] bg-[#7c5cff] text-white text-[10px] font-bold rounded-full inline-grid place-items-center px-1">
-                {unreadCount(t.list)}
+                {unreadCount(item.list)}
               </span>
             )}
           </button>
         ))}
       </div>
 
-      {/* List */}
       <div className="flex flex-col gap-2.5">
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <NotificationSkeleton key={i} />)
-        ) : (
-          currentList.map(n => (
-            <NotificationCard key={n.id} notif={n} onMarkRead={handleMarkRead} />
+          Array.from({ length: 4 }).map((_, index) => <NotificationSkeleton key={index} />)
+        ) : currentList.length > 0 ? (
+          currentList.map(notification => (
+            <NotificationCard
+              key={notification.id}
+              notif={notification}
+              onMarkRead={handleMarkRead}
+              onMovieClick={setSelectedMovie}
+            />
           ))
+        ) : (
+          <div className="text-center py-16 text-gray-400">
+            <p className="text-4xl mb-3">🔔</p>
+            <p className="font-semibold">표시할 알림이 없어요.</p>
+          </div>
         )}
       </div>
+
+      {selectedMovie && (
+        <MovieDetailModal
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
+        />
+      )}
     </div>
   )
 }

@@ -178,7 +178,13 @@ export default function MyPage() {
       {selectedMovie && <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />}
       <RecommendToFriendModal movie={recommendMovie} isOpen={!!recommendMovie} onClose={() => setRecommendMovie(null)} />
       <ProfileEditModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
-      <AddMovieModal isOpen={addMovieModalOpen} onClose={() => setAddMovieModalOpen(false)} onAdd={handleAddMovie} type={addMovieType} />
+      <AddMovieModal
+        isOpen={addMovieModalOpen}
+        onClose={() => setAddMovieModalOpen(false)}
+        onAdd={handleAddMovie}
+        type={addMovieType}
+        userOtt={user?.ott || []}
+      />
     </>
   )
 }

@@ -19,14 +19,24 @@
  * - Intersection Observer → 무한 스크롤 또는 lazy loading
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MovieDetailModal from '../components/MovieDetailModal'
 import HeroSection from '../components/home/HeroSection'
 import EmotionSection from '../components/home/EmotionSection'
+import { getPopularMovies } from '../services/movieApi'
 
 export default function Home() {
   const [selectedMovie, setSelectedMovie] = useState(null)
+
+  const [popularMovies, setPopularMovies] = useState([])
+
+  useEffect(() => {
+    // TMDB 인기 영화 조회 (홈 화면에서 사용 예정)
+     getPopularMovies().then((data) => {
+      setPopularMovies(data.results.slice(0, 5))
+     })
+  }, [])
 
   return (
     <>
@@ -95,20 +105,16 @@ export default function Home() {
               <Link to="/ott-ranking" className="text-xs text-gray-500 hover:text-[#7c5cff]">더보기 ›</Link>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
-              {[
-                { num: 1, name: '인터스텔라', rating: 4.6 },
-                { num: 2, name: '라라랜드', rating: 4.5 },
-                { num: 3, name: '어바웃 타임', rating: 4.5 },
-                { num: 4, name: '위플래쉬', rating: 4.4 },
-                { num: 5, name: '기생충', rating: 4.4 },
-              ].map(r => (
-                <div key={r.num} className="flex items-center gap-2 cursor-pointer hover:text-[#7c5cff]">
-                  <span className="text-sm font-extrabold w-4">{r.num}</span>
-                  <span className="text-xs font-semibold flex-1 truncate">{r.name}</span>
-                  <span className="text-[11px] text-gray-500">⭐ {r.rating}</span>
+              {popularMovies.map((movie, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-sm font-extrabold w-4">{index + 1}</span>
+                  <span className="text-xs font-semibold flex-1 truncate">{movie.title}</span>
+                  <span className="text-[11px] text-gray-500">⭐ {movie.vote_average.toFixed(1)}</span>
                 </div>
               ))}
             </div>
+            
+          
           </section>
         </aside>
       </div>

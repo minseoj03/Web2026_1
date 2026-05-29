@@ -36,7 +36,10 @@ export function FilterProvider({ children }) {
   const filterByOtt = useCallback((movies) => {
     const filter = getActiveOttFilter()
     if (!filter) return movies // 필터 없으면 전체 반환
-    return movies.filter(m => m.ott && filter.includes(m.ott))
+    return movies.filter(m =>
+      Array.isArray(m.ott) &&
+      m.ott.some(ott => filter.includes(ott))
+    )
   }, [getActiveOttFilter])
 
   // 장르 필터링 헬퍼

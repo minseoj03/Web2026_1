@@ -9,7 +9,7 @@
  */
 
 export default function MovieCard({ movie, onClick, size = 'default' }) {
-  const { title, genre, rating, gradient, poster } = movie
+  const { title, genre, rating, gradient, poster, posterPath } = movie  // ✅ posterPath도 받음
 
   const sizeClasses = {
     default: 'w-[clamp(120px,12vw,150px)]',
@@ -17,24 +17,26 @@ export default function MovieCard({ movie, onClick, size = 'default' }) {
     full: 'w-full',
   }
 
+  const posterSrc = poster || posterPath  // ✅ 둘 다 허용
+
   return (
     <div
       onClick={() => onClick?.(movie)}
       className={`shrink-0 ${sizeClasses[size]} cursor-pointer hover:-translate-y-1 transition group`}
     >
       {/* Poster */}
-      {poster ? (
-        // TODO [API 연결]: TMDB poster 이미지 사용
+      {posterSrc ? (
         <img
-          src={poster}
+          src={posterSrc}
           alt={title}
           className="aspect-[2/3] rounded-lg object-cover shadow-sm mb-2 w-full"
           loading="lazy"
+          onError={(e) => { e.target.style.display = 'none' }}  // ✅ 이미지 오류 처리
         />
       ) : (
-        // 포스터 없을 때 그라데이션 fallback
-        <div className={`aspect-[2/3] rounded-lg bg-gradient-to-br ${gradient || 'from-gray-400 to-gray-600'} grid place-items-center text-white font-extrabold text-sm p-3 text-center shadow-sm mb-2`}>
-          {title}
+        // ✅ fallback: 포스터 없을 때 그라데이션
+        <div className={`aspect-[2/3] rounded-lg mb-2 w-full bg-gradient-to-br ${gradient || 'from-[#2d1b4e] to-[#4a3268]'} grid place-items-center text-white`}>
+          <span className="text-2xl opacity-50">🎬</span>
         </div>
       )}
 
