@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useFriends } from '../contexts/FriendContext'
 import { useWishlist } from '../contexts/WishlistContext'
-import { getWatchedMovies } from '../services/mypageApi'
+import { getWatchedMovies, getWishlistMovies } from '../services/mypageApi'
 import ProfileSection from '../components/mypage/ProfileSection'
 import MovieScrollSection from '../components/mypage/MovieScrollSection'
 import MovieDetailModal from '../components/MovieDetailModal'
@@ -15,34 +15,20 @@ export default function MyPage() {
   const { friends } = useFriends()
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const [tab, setTab] = useState('watched')
-
-  // Movie detail modal
   const [selectedMovie, setSelectedMovie] = useState(null)
-
-  // Recommend modal
   const [recommendMovie, setRecommendMovie] = useState(null)
-
-  // Profile edit modal
   const [profileModalOpen, setProfileModalOpen] = useState(false)
-
-  // Add movie modal
   const [addMovieModalOpen, setAddMovieModalOpen] = useState(false)
   const [addMovieType, setAddMovieType] = useState('watched')
-
-  // Sort
   const [sortType, setSortType] = useState('recent')
   const [wishlistSortType, setWishlistSortType] = useState('recent')
-
-  // Watched state
   const [watched, setWatched] = useState([])
+  const [apiWishlist, setApiWishlist] = useState([])
   const [watchedLoading, setWatchedLoading] = useState(true)
+  const [wishlistLoading, setWishlistLoading] = useState(true)
   const [watchedError, setWatchedError] = useState(false)
+  const [wishlistError, setWishlistError] = useState(false)
 
-  // Wishlist는 WishlistContext에서 관리
-  const wishlistLoading = false
-  const wishlistError = false
-
-  // Fetch
   const fetchWatched = useCallback(async () => {
     setWatchedLoading(true)
     setWatchedError(false)
@@ -56,51 +42,81 @@ export default function MyPage() {
     }
   }, [user?.id])
 
+  const fetchWishlist = useCallback(async () => {
+    setWishlistLoading(true)
+    setWishlistError(false)
+    try {
+      const data = await getWishlistMovies(user?.id)
+      setApiWishlist(data)
+    } catch {
+      setWishlistError(true)
+    } finally {
+      setWishlistLoading(false)
+    }
+  }, [user?.id])
+
   useEffect(() => {
     fetchWatched()
-  }, [fetchWatched])
+    fetchWishlist()
+  }, [fetchWatched, fetchWishlist])
 
-  // Sorted watched movies
+  const displayedWishlist = wishlist.length > 0 ? wishlist : apiWishlist
+
   const sortedWatched = useMemo(() => {
     const sorted = [...watched]
     switch (sortType) {
-      case 'name': return sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+      case 'name':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
       case 'recent':
-      default: return sorted.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+      default:
+        return sorted.sort((a, b) => (b.date || '').localeCompare(a.date || ''))
     }
   }, [watched, sortType])
 
-  // Sorted wishlist movies
   const sortedWishlist = useMemo(() => {
-    const sorted = [...wishlist]
+    const sorted = [...displayedWishlist]
     switch (wishlistSortType) {
-      case 'name': return sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
+      case 'name':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title, 'ko'))
       case 'recent':
-      default: return sorted.sort((a, b) => (b.addedDate || '').localeCompare(a.addedDate || ''))
+      default:
+        return sorted.sort((a, b) => (b.addedDate || b.addedAt || '').localeCompare(a.addedDate || a.addedAt || ''))
     }
-  }, [wishlist, wishlistSortType])
+  }, [displayedWishlist, wishlistSortType])
 
-  // Add movie handler (optimistic UI)
   const handleAddMovie = (movie) => {
     if (addMovieType === 'watched') {
-      setWatched(prev => [movie, ...prev])
-    } else {
-      addToWishlist({ ...movie, id: movie.id || `wl-${Date.now()}` })
+      setWatched(prev => [{
+        ...movie,
+        date: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      }, ...prev])
+      return
     }
+
+    const nextMovie = {
+      ...movie,
+      addedDate: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      addedAt: new Date().toISOString(),
+    }
+    addToWishlist(nextMovie)
+    setApiWishlist(prev => [nextMovie, ...prev.filter(item => item.id !== nextMovie.id)])
   }
 
-  // Stats
+  const handleDeleteWishlist = (movie) => {
+    removeFromWishlist(movie.id)
+    setApiWishlist(prev => prev.filter(item => item.id !== movie.id))
+  }
+
   const stats = {
     watched: watched.length,
-    avgRating: watched.length > 0 ? (watched.reduce((sum, m) => sum + (m.rating || 0), 0) / watched.length).toFixed(1) : '0',
-    wishlist: wishlist.length,
+    avgRating: watched.length > 0 ? (watched.reduce((sum, movie) => sum + Number(movie.rating || 0), 0) / watched.length).toFixed(1) : '0',
+    wishlist: displayedWishlist.length,
     friends: friends.length,
   }
 
-  // ESC key to close modals
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') {
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
         setSelectedMovie(null)
         setRecommendMovie(null)
         setProfileModalOpen(false)
@@ -119,23 +135,21 @@ export default function MyPage() {
 
         <ProfileSection stats={stats} onEditProfile={() => setProfileModalOpen(true)} />
 
-        {/* Tabs */}
         <div className="flex items-center gap-6 border-b border-gray-200 mb-5">
           {[
             { id: 'watched', label: '내가 본 영화' },
             { id: 'wishlist', label: '찜한 목록' },
-          ].map(t => (
+          ].map(item => (
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`pb-3 text-sm font-semibold border-b-2 -mb-px transition ${tab === t.id ? 'text-[#7c5cff] border-[#7c5cff]' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className={`pb-3 text-sm font-semibold border-b-2 -mb-px transition ${tab === item.id ? 'text-[#7c5cff] border-[#7c5cff]' : 'text-gray-400 border-transparent hover:text-gray-600'}`}
             >
-              {t.label}
+              {item.label}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
         {tab === 'watched' && (
           <MovieScrollSection
             title="내가 본 영화"
@@ -147,10 +161,10 @@ export default function MyPage() {
             sortType={sortType}
             onSortChange={setSortType}
             onAddClick={() => { setAddMovieType('watched'); setAddMovieModalOpen(true) }}
-            onMovieClick={(movie) => setSelectedMovie(movie)}
-            onRecommend={(movie) => setRecommendMovie(movie)}
-            onEdit={(movie) => {/* TODO: 편집 모달 */}}
-            onDelete={(movie) => setWatched(prev => prev.filter(m => m.id !== movie.id))}
+            onMovieClick={setSelectedMovie}
+            onRecommend={setRecommendMovie}
+            onEdit={() => {}}
+            onDelete={(movie) => setWatched(prev => prev.filter(item => item.id !== movie.id))}
             onRetry={fetchWatched}
           />
         )}
@@ -158,7 +172,7 @@ export default function MyPage() {
         {tab === 'wishlist' && (
           <MovieScrollSection
             title="찜한 영화"
-            count={wishlist.length}
+            count={displayedWishlist.length}
             movies={sortedWishlist}
             loading={wishlistLoading}
             error={wishlistError}
@@ -166,15 +180,14 @@ export default function MyPage() {
             sortType={wishlistSortType}
             onSortChange={setWishlistSortType}
             onAddClick={() => { setAddMovieType('wishlist'); setAddMovieModalOpen(true) }}
-            onMovieClick={(movie) => setSelectedMovie(movie)}
-            onRecommend={(movie) => setRecommendMovie(movie)}
-            onDelete={(movie) => removeFromWishlist(movie.id)}
-            onRetry={() => {}}
+            onMovieClick={setSelectedMovie}
+            onRecommend={setRecommendMovie}
+            onDelete={handleDeleteWishlist}
+            onRetry={fetchWishlist}
           />
         )}
       </div>
 
-      {/* Modals */}
       {selectedMovie && <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />}
       <RecommendToFriendModal movie={recommendMovie} isOpen={!!recommendMovie} onClose={() => setRecommendMovie(null)} />
       <ProfileEditModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
