@@ -117,6 +117,23 @@ export default function VoteRoom() {
     })
   }
 
+  const handleDeleteMovie = (movieId) => {
+    if (!confirm('이 영화를 추천 목록에서 삭제하시겠어요?')) return
+
+    setRooms(prev => {
+      const current = prev[currentRoom]
+      const newMovies = current.movies.filter(m => m.id !== movieId)
+      const newVotes = { ...current.votes }
+      delete newVotes[movieId]
+      const newMyVote = current.myVote === movieId ? null : current.myVote
+
+      return {
+        ...prev,
+        [currentRoom]: { ...current, movies: newMovies, votes: newVotes, myVote: newMyVote },
+      }
+    })
+  }
+
   const handleDeleteRoom = () => {
     if (!isCreator) return
     if (!confirm('투표방을 삭제하시겠어요?')) return
@@ -250,7 +267,14 @@ export default function VoteRoom() {
                       const isVoted = room.myVote === movie.id
 
                       return (
-                        <div key={movie.id} className="cursor-pointer hover:-translate-y-1 transition">
+                        <div key={movie.id} className="relative cursor-pointer hover:-translate-y-1 transition">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie.id) }}
+                            className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/60 text-white grid place-items-center text-sm hover:bg-red-500 transition"
+                            title="영화 삭제"
+                          >
+                            ×
+                          </button>
                           {movie.posterPath ? (
                             <img
                               src={movie.posterPath}
