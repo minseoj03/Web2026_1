@@ -16,6 +16,7 @@ export default function MyPage() {
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const [tab, setTab] = useState('watched')
   const [selectedMovie, setSelectedMovie] = useState(null)
+  const [selectedMovieSource, setSelectedMovieSource] = useState(null)
   const [recommendMovie, setRecommendMovie] = useState(null)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [addMovieModalOpen, setAddMovieModalOpen] = useState(false)
@@ -118,6 +119,7 @@ export default function MyPage() {
     const handleEsc = (event) => {
       if (event.key === 'Escape') {
         setSelectedMovie(null)
+        setSelectedMovieSource(null)
         setRecommendMovie(null)
         setProfileModalOpen(false)
         setAddMovieModalOpen(false)
@@ -161,7 +163,10 @@ export default function MyPage() {
             sortType={sortType}
             onSortChange={setSortType}
             onAddClick={() => { setAddMovieType('watched'); setAddMovieModalOpen(true) }}
-            onMovieClick={setSelectedMovie}
+            onMovieClick={(movie) => {
+              setSelectedMovie(movie)
+              setSelectedMovieSource('watched')
+            }}
             onRecommend={setRecommendMovie}
             onEdit={() => {}}
             onDelete={(movie) => setWatched(prev => prev.filter(item => item.id !== movie.id))}
@@ -180,7 +185,10 @@ export default function MyPage() {
             sortType={wishlistSortType}
             onSortChange={setWishlistSortType}
             onAddClick={() => { setAddMovieType('wishlist'); setAddMovieModalOpen(true) }}
-            onMovieClick={setSelectedMovie}
+            onMovieClick={(movie) => {
+              setSelectedMovie(movie)
+              setSelectedMovieSource('wishlist')
+            }}
             onRecommend={setRecommendMovie}
             onDelete={handleDeleteWishlist}
             onRetry={fetchWishlist}
@@ -188,7 +196,16 @@ export default function MyPage() {
         )}
       </div>
 
-      {selectedMovie && <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />}
+      {selectedMovie && (
+        <MovieDetailModal
+          movie={selectedMovie}
+          onClose={() => {
+            setSelectedMovie(null)
+            setSelectedMovieSource(null)
+          }}
+          hideWishlist={selectedMovieSource === 'watched'}
+        />
+      )}
       <RecommendToFriendModal movie={recommendMovie} isOpen={!!recommendMovie} onClose={() => setRecommendMovie(null)} />
       <ProfileEditModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
       <AddMovieModal

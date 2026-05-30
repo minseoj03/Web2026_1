@@ -31,7 +31,7 @@ const getWatchLinks = (title) => {
   ]
 }
 
-export default function MovieDetailModal({ movie, onClose }) {
+export default function MovieDetailModal({ movie, onClose, hideWishlist = false }) {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
   const { isWishlisted, toggleWishlist } = useWishlist()
@@ -180,6 +180,7 @@ export default function MovieDetailModal({ movie, onClose }) {
                 ))}
               </div>
 
+              {!hideWishlist && (
               <button
                 onClick={() => toggleWishlist({
                   id: movie.id,
@@ -197,6 +198,7 @@ export default function MovieDetailModal({ movie, onClose }) {
               >
                 {wishlisted ? '찜 완료' : '찜하기'}
               </button>
+              )}
             </div>
           </>
         )}
