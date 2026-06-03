@@ -101,6 +101,27 @@ html.dark span {
   color: inherit;
 }
 
+/* Keep light status badges readable in dark mode */
+html.dark .bg-yellow-50.text-gray-900 {
+  background-color: #fef3c7 !important;
+  color: #111827 !important;
+}
+
+html.dark .bg-green-50.text-green-600 {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+}
+
+html.dark .bg-\[\#dbeafe\].text-\[\#2563eb\] {
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+html.dark .bg-\[\#dcfce7\].text-\[\#16a34a\] {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+}
+
 html.dark label {
   color: #e5e7eb;
 }

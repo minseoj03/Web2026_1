@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import MovieDetailModal from '../components/MovieDetailModal'
+import { useNotif } from '../contexts/NotifContext'
 import { resolveNotification } from '../notifications/template'
-import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../services/notificationApi'
 
 function NotificationSkeleton() {
   return (
@@ -75,16 +75,8 @@ function NotificationCard({ notif, onMarkRead, onMovieClick }) {
 
 export default function Notifications() {
   const [tab, setTab] = useState('recommend')
-  const [notifications, setNotifications] = useState([])
-  const [loading, setLoading] = useState(true)
   const [selectedMovie, setSelectedMovie] = useState(null)
-
-  useEffect(() => {
-    setLoading(true)
-    getNotifications()
-      .then(data => setNotifications(data))
-      .finally(() => setLoading(false))
-  }, [])
+  const { notifications, loading, markAsRead, markAllAsRead } = useNotif()
 
   const filterByCategory = (category) => {
     return notifications.filter(notification => {
@@ -99,13 +91,11 @@ export default function Notifications() {
   const unreadCount = (list) => list.filter(notification => !notification.read).length
 
   const handleMarkRead = async (id) => {
-    await markNotificationRead(id)
-    setNotifications(prev => prev.map(notification => notification.id === id ? { ...notification, read: true } : notification))
+    await markAsRead(id)
   }
 
   const handleMarkAllRead = async () => {
-    await markAllNotificationsRead()
-    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })))
+    await markAllAsRead()
   }
 
   return (

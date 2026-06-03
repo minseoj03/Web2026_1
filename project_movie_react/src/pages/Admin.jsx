@@ -52,7 +52,7 @@ export default function Admin() {
   const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
 
   return (
-    <div className="max-w-[1200px] mx-auto px-8 py-6">
+    <div className="w-full min-h-screen px-[clamp(1.25rem,4vw,4rem)] py-6">
       {/* Header */}
       <header className="flex items-center justify-between mb-7">
         <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export default function Admin() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-5 max-lg:grid-cols-3 max-md:grid-cols-2 gap-3.5 mb-7">
+      <div className="grid grid-cols-5 max-xl:grid-cols-3 max-md:grid-cols-2 gap-3.5 mb-7">
         {[
           { label: '전체 가입자 수', value: '1,247', change: '↑ +23 이번 주', up: true },
           { label: '오늘 접속자 수', value: '342', change: '● 실시간 89명', up: true },
@@ -90,8 +90,8 @@ export default function Admin() {
       </div>
 
       {/* User Management */}
-      <section className="bg-white rounded-xl border border-gray-100 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <section className="bg-white rounded-xl border border-gray-100 p-6 w-full">
+        <div className="flex items-center justify-between mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3">
           <h2 className="text-base font-extrabold">사용자 관리</h2>
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-gray-400">🔍</span>
@@ -100,7 +100,7 @@ export default function Admin() {
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder="닉네임, 이메일 검색"
-              className="pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none w-[240px] focus:border-[#7c5cff]"
+              className="pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm outline-none w-[min(360px,28vw)] max-md:w-full focus:border-[#7c5cff]"
             />
           </div>
         </div>
@@ -119,7 +119,8 @@ export default function Admin() {
         </div>
 
         {/* Table */}
-        <table className="w-full">
+        <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[760px]">
           <thead>
             <tr className="border-b border-gray-100">
               {['닉네임', '이메일', '권한', '상태', '가입일', '관리'].map(h => (
@@ -149,6 +150,7 @@ export default function Admin() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Pagination */}
         <div className="flex items-center justify-center gap-1 mt-4">

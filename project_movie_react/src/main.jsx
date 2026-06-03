@@ -7,6 +7,7 @@ import { NotifProvider } from './contexts/NotifContext'
 import { WishlistProvider } from './contexts/WishlistContext'
 import { FriendProvider } from './contexts/FriendContext'
 import { ToastProvider } from './components/Toast'
+import LanguageDomTranslator from './components/LanguageDomTranslator'
 import './index.css'
 import App from './App.jsx'
 
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')).render(
             <WishlistProvider>
               <FriendProvider>
                 <ToastProvider>
+                  <LanguageDomTranslator />
                   <App />
                 </ToastProvider>
               </FriendProvider>
