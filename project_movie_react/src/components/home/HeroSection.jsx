@@ -73,9 +73,9 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="bg-white rounded-2xl p-7 shadow-sm">
-      <div className="flex items-start justify-between gap-4 mb-5">
-        <div>
+    <section className="bg-white rounded-2xl p-7 max-md:p-5 shadow-sm overflow-hidden">
+      <div className="flex items-start justify-between gap-4 mb-5 max-md:flex-col">
+        <div className="min-w-0">
           <p className="text-sm text-gray-500 mb-1.5">안녕하세요, {user?.nickname || '회원'}님! 👋</p>
           <h1 className="text-2xl font-extrabold mb-2">
             회원님을 위한 맞춤 추천 <span className="text-[#7c5cff]">💜</span>
@@ -105,8 +105,8 @@ export default function HeroSection() {
         )}
       </div>
 
-      <div className="grid grid-cols-[clamp(180px,20vw,280px)_1fr] max-md:grid-cols-1 gap-[clamp(1rem,2vw,1.75rem)]">
-        <div className={`relative rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-br ${heroMovie.gradient} cursor-pointer hover:-translate-y-0.5 transition`}>
+      <div className="grid grid-cols-[clamp(210px,22vw,300px)_minmax(0,1fr)] max-lg:grid-cols-[220px_minmax(0,1fr)] max-md:grid-cols-1 gap-[clamp(1rem,2vw,1.75rem)] min-w-0">
+        <div className={`relative rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-br ${heroMovie.gradient} cursor-pointer hover:-translate-y-0.5 transition max-md:max-w-[260px]`}>
           <span className="absolute top-3 left-3 z-10 bg-[#7c5cff] text-white px-2.5 py-1 rounded-full text-[11px] font-bold">
             오늘의 추천 {hasMultipleMovies ? `${activeIndex + 1}/${heroMovies.length}` : ''}
           </span>
@@ -131,9 +131,9 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <div className="flex items-start justify-between gap-3 mb-3">
-            <h2 className="text-2xl font-extrabold">{heroMovie.title}</h2>
+            <h2 className="text-2xl max-md:text-xl font-extrabold break-words min-w-0">{heroMovie.title}</h2>
             {hasMultipleMovies && (
               <div className="flex gap-1.5 pt-1 shrink-0" aria-label="추천 영화 순서">
                 {heroMovies.map((movie, index) => (
@@ -155,7 +155,7 @@ export default function HeroSection() {
             <span className="text-sm font-semibold">⭐ {heroMovie.rating}</span>
           </div>
           <p className="text-xs text-gray-500 mb-3.5">{heroMovie.releaseYear}</p>
-          <p className="text-xs text-gray-500 mb-3.5 line-clamp-3">{heroMovie.overview}</p>
+          <p className="text-xs text-gray-500 mb-3.5 line-clamp-3 break-words">{heroMovie.overview}</p>
           <p className="text-sm text-[#7c5cff] font-bold mb-2.5">추천 이유</p>
           <ul className="flex flex-col gap-2 mb-5 text-sm">
             {heroMovie.recommendReasons.map(reason => (

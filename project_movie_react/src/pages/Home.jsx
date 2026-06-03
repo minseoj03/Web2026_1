@@ -31,13 +31,13 @@ export default function Home() {
 
   return (
     <>
-      <div className="grid grid-cols-[1fr_clamp(260px,22vw,320px)] max-xl:grid-cols-1 gap-[clamp(1rem,2vw,1.5rem)] fluid-px pb-8">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)_clamp(260px,22vw,320px)] max-xl:grid-cols-1 gap-[clamp(1rem,2vw,1.5rem)] fluid-px pb-8 overflow-hidden">
+        <div className="min-w-0">
           <HeroSection />
           <EmotionSection onMovieClick={(movie) => setSelectedMovie(movie)} />
         </div>
 
-        <aside className="flex flex-col gap-4 max-xl:flex-row max-xl:flex-wrap max-md:flex-col">
+        <aside className="min-w-0 flex flex-col gap-4 max-xl:grid max-xl:grid-cols-3 max-lg:grid-cols-1">
           <section className="bg-white rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-sm font-extrabold">친구들의 최근 활동</h3>

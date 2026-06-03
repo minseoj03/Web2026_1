@@ -110,7 +110,7 @@ export default function EmotionSection({ onMovieClick }) {
   const scrollMovies = (left) => movieScrollRef.current?.scrollBy({ left, behavior: 'smooth' })
 
   return (
-    <section className="bg-gradient-to-br from-[#faf8ff] to-white rounded-2xl p-6 shadow-sm mt-6">
+    <section className="bg-gradient-to-br from-[#faf8ff] to-white rounded-2xl p-6 max-md:p-5 shadow-sm mt-6 overflow-hidden min-w-0">
       <h2 className="text-base font-extrabold mb-1">
         AI 감정 기반 추천
         <span className="text-[10px] bg-[#7c5cff] text-white px-1.5 py-0.5 rounded ml-1 font-bold align-middle">BETA</span>
@@ -119,7 +119,7 @@ export default function EmotionSection({ onMovieClick }) {
         인기, 평점, 평가 수, 구독 OTT, 최신성을 함께 계산해 지금 기분에 맞는 영화를 추천해요.
       </p>
 
-      <div className="relative mb-5">
+      <div className="relative mb-5 min-w-0">
         <button
           type="button"
           onClick={() => scrollTags(-220)}
@@ -130,7 +130,7 @@ export default function EmotionSection({ onMovieClick }) {
         </button>
         <div
           ref={tagScrollRef}
-          className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-8 scroll-smooth"
+          className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-8 scroll-smooth max-w-full"
         >
           {emotionTags.map(tag => (
             <button
@@ -157,7 +157,7 @@ export default function EmotionSection({ onMovieClick }) {
         </button>
       </div>
 
-      <div className="relative">
+      <div className="relative min-w-0">
         {!loading && filteredMovies.length > 0 && (
           <button
             onClick={() => scrollMovies(-300)}
@@ -167,7 +167,7 @@ export default function EmotionSection({ onMovieClick }) {
             ‹
           </button>
         )}
-        <div ref={movieScrollRef} className="flex gap-[clamp(0.75rem,1.2vw,0.875rem)] overflow-x-auto pb-2 scrollbar-hide scroll-smooth">
+        <div ref={movieScrollRef} className="flex gap-[clamp(0.75rem,1.2vw,0.875rem)] overflow-x-auto pb-2 scrollbar-hide scroll-smooth max-w-full">
           {loading ? (
             <MovieCardSkeleton count={5} />
           ) : filteredMovies.length > 0 ? (
