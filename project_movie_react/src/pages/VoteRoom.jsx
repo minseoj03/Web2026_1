@@ -449,7 +449,14 @@ function CreateRoomModal({ onClose, onCreate }) {
   const [deadline, setDeadline] = useState('')
   const [deadlineTime, setDeadlineTime] = useState('23:59')
   const [selectedFriends, setSelectedFriends] = useState([])
+  const [friendSearch, setFriendSearch] = useState('')
   const { friends } = useFriends()
+  const filteredFriends = friends.filter(friend => {
+    const keyword = friendSearch.trim().toLowerCase()
+    if (!keyword) return true
+    return friend.name.toLowerCase().includes(keyword) || friend.email.toLowerCase().includes(keyword)
+  })
+  const selectedFriendItems = friends.filter(friend => selectedFriends.includes(friend.name))
 
   const toggleFriend = (name) => {
     setSelectedFriends(prev => prev.includes(name) ? prev.filter(item => item !== name) : [...prev, name])
@@ -500,20 +507,56 @@ function CreateRoomModal({ onClose, onCreate }) {
             친구 초대 <span className="text-red-500">*</span>
             {selectedFriends.length > 0 && <span className="text-[#7c5cff] ml-1">({selectedFriends.length}명 선택)</span>}
           </label>
-          <div className="flex flex-wrap gap-2">
-            {friends.map(friend => (
-              <button
-                key={friend.name}
-                onClick={() => toggleFriend(friend.name)}
-                className={`flex items-center gap-2 px-3 py-2 border rounded-full text-xs font-semibold transition ${
-                  selectedFriends.includes(friend.name) ? 'border-[#7c5cff] bg-[#faf8ff] text-[#7c5cff]' : 'border-gray-200 text-gray-500 hover:border-[#9b85ff]'
-                }`}
-              >
-                <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${friend.color} grid place-items-center text-white text-[10px] font-bold`}>{friend.initial}</div>
-                {friend.name}
-                {selectedFriends.includes(friend.name) && <span>✓</span>}
-              </button>
-            ))}
+          <div className="relative mb-2">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔎</span>
+            <input
+              value={friendSearch}
+              onChange={event => setFriendSearch(event.target.value)}
+              placeholder="친구 이름 또는 이메일 검색"
+              className="w-full pl-10 pr-3.5 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#7c5cff]"
+            />
+          </div>
+
+          {selectedFriendItems.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {selectedFriendItems.map(friend => (
+                <button
+                  key={friend.name}
+                  onClick={() => toggleFriend(friend.name)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#f3f0ff] text-[#7c5cff] rounded-full text-xs font-bold"
+                >
+                  {friend.name}
+                  <span className="text-[10px]">×</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2 max-h-[176px] overflow-y-auto pr-1">
+            {filteredFriends.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                검색 결과가 없어요.
+              </p>
+            ) : (
+              filteredFriends.map(friend => (
+                <button
+                  key={friend.name}
+                  onClick={() => toggleFriend(friend.name)}
+                  className={`flex items-center gap-3 p-3 border rounded-xl text-left transition ${
+                    selectedFriends.includes(friend.name) ? 'border-[#7c5cff] bg-[#faf8ff]' : 'border-gray-200 hover:border-[#9b85ff]'
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${friend.color} grid place-items-center text-white text-sm font-bold shrink-0`}>{friend.initial}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{friend.name}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{friend.email}</p>
+                  </div>
+                  <span className={`w-6 h-6 rounded-full border grid place-items-center text-xs transition ${selectedFriends.includes(friend.name) ? 'bg-[#7c5cff] text-white border-[#7c5cff]' : 'border-gray-200 text-gray-400'}`}>
+                    {selectedFriends.includes(friend.name) ? '✓' : '+'}
+                  </span>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
@@ -557,8 +600,15 @@ function CreateRoomModal({ onClose, onCreate }) {
 
 function InviteFriendModal({ onClose, onInvite, currentParticipants }) {
   const [selected, setSelected] = useState([])
+  const [query, setQuery] = useState('')
   const { friends: allFriends } = useFriends()
   const friends = allFriends.filter(friend => !currentParticipants.includes(friend.name))
+  const filteredFriends = friends.filter(friend => {
+    const keyword = query.trim().toLowerCase()
+    if (!keyword) return true
+    return friend.name.toLowerCase().includes(keyword) || friend.email.toLowerCase().includes(keyword)
+  })
+  const selectedFriends = friends.filter(friend => selected.includes(friend.name))
 
   const toggle = (name) => {
     setSelected(prev => prev.includes(name) ? prev.filter(item => item !== name) : [...prev, name])
@@ -585,22 +635,58 @@ function InviteFriendModal({ onClose, onInvite, currentParticipants }) {
         {friends.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-6">초대할 수 있는 친구가 없어요.</p>
         ) : (
-          <div className="flex flex-col gap-2 mb-5">
-            {friends.map(friend => (
-              <div
-                key={friend.name}
-                onClick={() => toggle(friend.name)}
-                className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition ${
-                  selected.includes(friend.name) ? 'border-[#7c5cff] bg-[#faf8ff]' : 'border-gray-200 hover:border-[#9b85ff]'
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${friend.color} grid place-items-center text-white font-bold text-sm`}>{friend.initial}</div>
-                <span className="text-sm font-semibold flex-1">{friend.name}</span>
-                <span className={`w-6 h-6 rounded-full border grid place-items-center text-xs transition ${selected.includes(friend.name) ? 'bg-[#7c5cff] text-white border-[#7c5cff]' : 'border-gray-200 text-gray-400'}`}>
-                  {selected.includes(friend.name) ? '✓' : ''}
-                </span>
+          <div className="mb-5">
+            <div className="relative mb-3">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔎</span>
+              <input
+                value={query}
+                onChange={event => setQuery(event.target.value)}
+                placeholder="초대할 친구 검색"
+                className="w-full pl-10 pr-3.5 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#7c5cff]"
+              />
+            </div>
+
+            {selectedFriends.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {selectedFriends.map(friend => (
+                  <button
+                    key={friend.name}
+                    onClick={() => toggle(friend.name)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#f3f0ff] text-[#7c5cff] rounded-full text-xs font-bold"
+                  >
+                    {friend.name}
+                    <span className="text-[10px]">×</span>
+                  </button>
+                ))}
               </div>
-            ))}
+            )}
+
+            <div className="flex flex-col gap-2 max-h-[240px] overflow-y-auto pr-1">
+              {filteredFriends.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-xl">
+                  검색 결과가 없어요.
+                </p>
+              ) : (
+                filteredFriends.map(friend => (
+                  <button
+                    key={friend.name}
+                    onClick={() => toggle(friend.name)}
+                    className={`flex items-center gap-3 p-3 border rounded-xl text-left transition ${
+                      selected.includes(friend.name) ? 'border-[#7c5cff] bg-[#faf8ff]' : 'border-gray-200 hover:border-[#9b85ff]'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${friend.color} grid place-items-center text-white font-bold text-sm shrink-0`}>{friend.initial}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold truncate">{friend.name}</p>
+                      <p className="text-[11px] text-gray-400 truncate">{friend.email}</p>
+                    </div>
+                    <span className={`w-6 h-6 rounded-full border grid place-items-center text-xs transition ${selected.includes(friend.name) ? 'bg-[#7c5cff] text-white border-[#7c5cff]' : 'border-gray-200 text-gray-400'}`}>
+                      {selected.includes(friend.name) ? '✓' : '+'}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         )}
         <button
@@ -741,3 +827,4 @@ function AddMovieToRoomModal({ onClose, onAdd }) {
     </div>
   )
 }
+
