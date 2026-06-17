@@ -111,10 +111,7 @@ export default function EmotionSection({ onMovieClick }) {
 
   return (
     <section className="bg-gradient-to-br from-[#faf8ff] to-white rounded-2xl p-6 max-md:p-5 shadow-sm mt-6 overflow-hidden min-w-0">
-      <h2 className="text-base font-extrabold mb-1">
-        AI 감정 기반 추천
-        <span className="text-[10px] bg-[#7c5cff] text-white px-1.5 py-0.5 rounded ml-1 font-bold align-middle">BETA</span>
-      </h2>
+      <h2 className="text-base font-extrabold mb-1">AI 감정 기반 추천</h2>
       <p className="text-xs text-gray-500 mb-4">
         인기, 평점, 평가 수, 구독 OTT, 최신성을 함께 계산해 지금 기분에 맞는 영화를 추천해요.
       </p>

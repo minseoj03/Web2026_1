@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useFriends } from '../contexts/FriendContext'
 import { useWishlist } from '../contexts/WishlistContext'
 import { getWatchedMovies, getWishlistMovies } from '../services/mypageApi'
+import { searchMovies } from '../services/movieApi'
 import ProfileSection from '../components/mypage/ProfileSection'
 import MovieScrollSection from '../components/mypage/MovieScrollSection'
 import MovieDetailModal from '../components/MovieDetailModal'
@@ -18,6 +19,7 @@ export default function MyPage() {
   const [selectedMovie, setSelectedMovie] = useState(null)
   const [selectedMovieSource, setSelectedMovieSource] = useState(null)
   const [recommendMovie, setRecommendMovie] = useState(null)
+  const [editingMovie, setEditingMovie] = useState(null)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const [addMovieModalOpen, setAddMovieModalOpen] = useState(false)
   const [addMovieType, setAddMovieType] = useState('watched')
@@ -25,6 +27,7 @@ export default function MyPage() {
   const [wishlistSortType, setWishlistSortType] = useState('recent')
   const [watched, setWatched] = useState([])
   const [apiWishlist, setApiWishlist] = useState([])
+  const [enrichedWishlist, setEnrichedWishlist] = useState([])
   const [watchedLoading, setWatchedLoading] = useState(true)
   const [wishlistLoading, setWishlistLoading] = useState(true)
   const [watchedError, setWatchedError] = useState(false)
@@ -61,7 +64,53 @@ export default function MyPage() {
     fetchWishlist()
   }, [fetchWatched, fetchWishlist])
 
-  const displayedWishlist = wishlist.length > 0 ? wishlist : apiWishlist
+  useEffect(() => {
+    let ignore = false
+
+    const enrichWishlist = async () => {
+      if (wishlist.length === 0) {
+        setEnrichedWishlist([])
+        return
+      }
+
+      setEnrichedWishlist(wishlist)
+
+      const movies = await Promise.all(wishlist.map(async (movie) => {
+        if (movie.posterPath && movie.overview) return movie
+
+        try {
+          const results = await searchMovies(movie.title)
+          const tmdbMovie = results?.find(item => item.id === movie.id) || results?.[0]
+          if (!tmdbMovie) return movie
+
+          return {
+            ...movie,
+            original_title: tmdbMovie.original_title || movie.original_title,
+            overview: tmdbMovie.overview || movie.overview,
+            poster_path: tmdbMovie.poster_path || movie.poster_path,
+            release_date: tmdbMovie.release_date || movie.release_date,
+            vote_average: tmdbMovie.vote_average || movie.vote_average,
+            title: tmdbMovie.title || movie.title,
+            rating: movie.rating || (tmdbMovie.vote_average ? (tmdbMovie.vote_average / 2).toFixed(1) : ''),
+            posterPath: tmdbMovie.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbMovie.poster_path}` : movie.posterPath,
+          }
+        } catch (error) {
+          console.error('[MyPage wishlist enrich]', error)
+          return movie
+        }
+      }))
+
+      if (!ignore) setEnrichedWishlist(movies)
+    }
+
+    enrichWishlist()
+
+    return () => {
+      ignore = true
+    }
+  }, [wishlist])
+
+  const displayedWishlist = wishlist.length > 0 ? (enrichedWishlist.length > 0 ? enrichedWishlist : wishlist) : apiWishlist
 
   const sortedWatched = useMemo(() => {
     const sorted = [...watched]
@@ -108,6 +157,15 @@ export default function MyPage() {
     setApiWishlist(prev => prev.filter(item => item.id !== movie.id))
   }
 
+  const getMovieKey = (movie) => movie.localId || movie.id
+
+  const handleUpdateWatchedMovie = (updatedMovie) => {
+    setWatched(prev => prev.map(movie => (
+      getMovieKey(movie) === getMovieKey(updatedMovie) ? { ...movie, ...updatedMovie } : movie
+    )))
+    setEditingMovie(null)
+  }
+
   const stats = {
     watched: watched.length,
     avgRating: watched.length > 0 ? (watched.reduce((sum, movie) => sum + Number(movie.rating || 0), 0) / watched.length).toFixed(1) : '0',
@@ -121,6 +179,7 @@ export default function MyPage() {
         setSelectedMovie(null)
         setSelectedMovieSource(null)
         setRecommendMovie(null)
+        setEditingMovie(null)
         setProfileModalOpen(false)
         setAddMovieModalOpen(false)
       }
@@ -168,7 +227,7 @@ export default function MyPage() {
               setSelectedMovieSource('watched')
             }}
             onRecommend={setRecommendMovie}
-            onEdit={() => {}}
+            onEdit={setEditingMovie}
             onDelete={(movie) => setWatched(prev => prev.filter(item => item.id !== movie.id))}
             onRetry={fetchWatched}
           />
@@ -207,6 +266,11 @@ export default function MyPage() {
         />
       )}
       <RecommendToFriendModal movie={recommendMovie} isOpen={!!recommendMovie} onClose={() => setRecommendMovie(null)} />
+      <WatchedMovieEditModal
+        movie={editingMovie}
+        onClose={() => setEditingMovie(null)}
+        onSave={handleUpdateWatchedMovie}
+      />
       <ProfileEditModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
       <AddMovieModal
         isOpen={addMovieModalOpen}
@@ -216,5 +280,96 @@ export default function MyPage() {
         userOtt={user?.ott || []}
       />
     </>
+  )
+}
+
+function toDateInputValue(date) {
+  return date ? date.replace(/\./g, '-') : new Date().toISOString().slice(0, 10)
+}
+
+function toDisplayDate(date) {
+  return date ? date.replace(/-/g, '.') : new Date().toISOString().slice(0, 10).replace(/-/g, '.')
+}
+
+function WatchedMovieEditModal({ movie, onClose, onSave }) {
+  const [rating, setRating] = useState(0)
+  const [review, setReview] = useState('')
+  const [date, setDate] = useState('')
+
+  useEffect(() => {
+    if (!movie) return
+    setRating(Number(movie.rating || 0))
+    setReview(movie.review || '')
+    setDate(toDateInputValue(movie.date))
+  }, [movie])
+
+  if (!movie) return null
+
+  const handleSave = () => {
+    onSave({
+      ...movie,
+      rating,
+      review: review.trim(),
+      date: toDisplayDate(date),
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[1000] grid place-items-center" onClick={onClose} role="dialog" aria-label="본 영화 편집">
+      <div className="bg-white rounded-2xl p-7 w-full max-w-[420px] shadow-xl animate-[modalIn_0.25s_ease]" onClick={event => event.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div className="min-w-0">
+            <h2 className="text-lg font-extrabold">본 영화 편집</h2>
+            <p className="text-sm text-gray-500 truncate mt-1">{movie.title}</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 grid place-items-center text-sm text-gray-500 hover:text-[#7c5cff]" aria-label="닫기">×</button>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-bold mb-2">별점</label>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map(star => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setRating(star)}
+                className={`text-2xl transition ${star <= rating ? 'text-[#fbbf24]' : 'text-gray-300 hover:text-[#fbbf24]'}`}
+                aria-label={`${star}점`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-bold mb-1.5">시청 날짜</label>
+          <input
+            type="date"
+            value={date}
+            onChange={event => setDate(event.target.value)}
+            className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#7c5cff]"
+          />
+        </div>
+
+        <div className="mb-5">
+          <label className="block text-sm font-bold mb-1.5">한줄평</label>
+          <textarea
+            value={review}
+            onChange={event => setReview(event.target.value)}
+            rows={3}
+            placeholder="이 영화에 대한 감상평"
+            className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#7c5cff] resize-none"
+          />
+        </div>
+
+        <button
+          onClick={handleSave}
+          className="w-full py-3.5 rounded-xl text-sm font-bold bg-[#7c5cff] text-white hover:bg-[#5d3ee8] transition"
+        >
+          저장하기
+        </button>
+      </div>
+    </div>
   )
 }

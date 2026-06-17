@@ -252,7 +252,7 @@ export default function VoteRoom() {
                 </div>
 
                 {loadingMovies ? (
-                  <div className="grid grid-cols-3 max-md:grid-cols-2 gap-3.5">
+                  <div className="vote-movie-grid grid gap-3.5">
                     {Array.from({ length: 3 }).map((_, index) => (
                       <div key={index} className="animate-pulse">
                         <div className="aspect-[2/3] rounded-xl bg-gray-200 mb-2.5" />
@@ -262,12 +262,12 @@ export default function VoteRoom() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 max-md:grid-cols-2 gap-3.5">
+                  <div className="vote-movie-grid grid gap-3.5">
                     {room.movies.map(movie => {
                       const isVoted = room.myVote === movie.id
 
                       return (
-                        <div key={movie.id} className="relative cursor-pointer hover:-translate-y-1 transition">
+                        <div key={movie.id} className="relative min-w-0 cursor-pointer hover:-translate-y-1 transition">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie.id) }}
                             className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/60 text-white grid place-items-center text-sm hover:bg-red-500 transition"
@@ -279,23 +279,23 @@ export default function VoteRoom() {
                             <img
                               src={movie.posterPath}
                               alt={movie.title}
-                              className="aspect-[2/3] rounded-xl object-cover w-full shadow-sm mb-2.5"
+                              className="aspect-[2/3] rounded-lg object-cover w-full shadow-sm mb-2"
                               loading="lazy"
                             />
                           ) : (
-                            <div className={`aspect-[2/3] rounded-xl bg-gradient-to-br ${movie.gradient} grid place-items-center text-white font-extrabold text-base p-3 text-center shadow-sm mb-2.5`}>
+                            <div className={`aspect-[2/3] rounded-lg bg-gradient-to-br ${movie.gradient} grid place-items-center text-white font-extrabold text-sm p-3 text-center shadow-sm mb-2`}>
                               {movie.title}
                             </div>
                           )}
-                          <p className="text-sm font-bold mb-1 truncate">{movie.title}</p>
-                          <p className="text-xs text-gray-500 mb-2 line-clamp-2">{movie.reason}</p>
-                          <div className="flex items-center justify-between text-[11px] mb-2">
+                          <p className="text-[13px] font-bold mb-1 truncate">{movie.title}</p>
+                          <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{movie.reason}</p>
+                          <div className="flex items-center justify-between text-[10px] mb-2">
                             <span className="text-gray-500">{movie.author}</span>
                             {movie.rating && <span className="font-semibold text-gray-500">⭐ {movie.rating}</span>}
                           </div>
                           <button
                             onClick={() => handleVote(movie.id)}
-                            className={`w-full py-2 rounded-lg text-xs font-bold transition ${
+                            className={`w-full py-1.5 rounded-lg text-[11px] font-bold transition ${
                               isVoted ? 'bg-[#7c5cff] text-white' : 'bg-gray-100 text-gray-600 hover:bg-[#f3f0ff] hover:text-[#7c5cff]'
                             }`}
                           >
