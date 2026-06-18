@@ -62,7 +62,7 @@ const koToEn = {
   읽음: 'Read',
   '추천 알림과 일반 알림을 확인하세요.': 'Check recommendation and general notifications.',
   '표시할 알림이 없어요.': 'No notifications to show.',
-  'AI 감정 기반 추천': 'AI Emotion Recommendations',
+  '기분별 영화 큐레이션': 'Movies Curated by Mood',
   '인기, 평점, 평가 수, 구독 OTT, 최신성을 함께 계산해 지금 기분에 맞는 영화를 추천해요.': 'We calculate popularity, ratings, vote count, subscribed OTT, and recency to recommend movies for your mood.',
   '무료할 때': 'When bored',
   '잠이 안 올 때': 'When sleepless',
