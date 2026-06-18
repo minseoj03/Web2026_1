@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../Toast'
 
@@ -6,8 +6,16 @@ export default function ProfileEditModal({ isOpen, onClose }) {
   const { user, updateUser } = useAuth()
   const { addToast } = useToast()
   const [nickname, setNickname] = useState(user?.nickname || '')
-  const [bio, setBio] = useState('영화가 좋은 사람 🎬')
+  const [bio, setBio] = useState(user?.bio || '영화가 좋은 사람 🎬')
+  const [avatarColor, setAvatarColor] = useState(user?.color || 'from-[#ffd6a5] to-[#fdb88a]')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setNickname(user?.nickname || '')
+    setBio(user?.bio || '영화가 좋은 사람 🎬')
+    setAvatarColor(user?.color || 'from-[#ffd6a5] to-[#fdb88a]')
+  }, [isOpen, user?.bio, user?.color, user?.nickname])
 
   if (!isOpen) return null
 
@@ -16,7 +24,11 @@ export default function ProfileEditModal({ isOpen, onClose }) {
     setSaving(true)
     // TODO [API 연결]: PUT /api/users/:id { nickname, bio }
     await new Promise(r => setTimeout(r, 400))
-    updateUser({ nickname: nickname.trim() })
+    updateUser({
+      nickname: nickname.trim(),
+      bio: bio.trim(),
+      color: avatarColor,
+    })
     addToast('프로필이 수정되었어요 ✨', { type: 'success' })
     setSaving(false)
     onClose()
@@ -31,10 +43,29 @@ export default function ProfileEditModal({ isOpen, onClose }) {
         </div>
 
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#ffd6a5] to-[#fdb88a] grid place-items-center text-2xl font-extrabold text-white">
+          <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${avatarColor} grid place-items-center text-2xl font-extrabold text-white`}>
             {nickname[0] || '?'}
           </div>
-          <button className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold hover:border-[#7c5cff] hover:text-[#7c5cff] transition">이미지 변경</button>
+          <div>
+            <p className="text-xs font-semibold text-gray-500 mb-2">프로필 색상</p>
+            <div className="flex gap-1.5">
+              {[
+                'from-[#ffd6a5] to-[#fdb88a]',
+                'from-[#fda4af] to-[#f43f5e]',
+                'from-[#93c5fd] to-[#2563eb]',
+                'from-[#d8b4fe] to-[#9333ea]',
+                'from-[#86efac] to-[#16a34a]',
+              ].map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setAvatarColor(color)}
+                  className={`w-7 h-7 rounded-full bg-gradient-to-br ${color} border-2 ${avatarColor === color ? 'border-[#7c5cff] scale-110' : 'border-white'} shadow-sm transition`}
+                  aria-label="프로필 색상 선택"
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="mb-4">

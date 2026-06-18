@@ -1,6 +1,20 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
 const AuthContext = createContext()
+const PROFILE_STORAGE_PREFIX = 'moviemate_profile_'
+
+function getStoredProfile(userId) {
+  if (!userId) return {}
+  try {
+    return JSON.parse(localStorage.getItem(`${PROFILE_STORAGE_PREFIX}${userId}`) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function mergeStoredProfile(userData) {
+  return userData ? { ...userData, ...getStoredProfile(userData.id) } : null
+}
 
 const DEFAULT_USER = {
   email: '',
@@ -52,13 +66,13 @@ export function AuthProvider({ children }) {
 
   // 로그인 (API 응답의 user + token을 저장)
   const login = (userData, accessToken) => {
-    setUser(userData)
+    setUser(mergeStoredProfile(userData))
     setToken(accessToken)
   }
 
   // 회원가입 (API 응답의 user + token을 저장)
   const signup = (userData, accessToken) => {
-    setUser(userData)
+    setUser(mergeStoredProfile(userData))
     setToken(accessToken)
   }
 
@@ -71,7 +85,16 @@ export function AuthProvider({ children }) {
   // 사용자 정보 업데이트
   // TODO [API 연결]: PUT /api/users/:id 로 서버에 변경사항 저장
   const updateUser = useCallback((updates) => {
-    setUser(prev => prev ? { ...prev, ...updates } : null)
+    setUser(prev => {
+      if (!prev) return null
+      const nextUser = { ...prev, ...updates }
+      const profileUpdates = {
+        ...getStoredProfile(prev.id),
+        ...updates,
+      }
+      localStorage.setItem(`${PROFILE_STORAGE_PREFIX}${prev.id}`, JSON.stringify(profileUpdates))
+      return nextUser
+    })
   }, [])
 
   // OTT 구독 목록 토글 (추가/제거)

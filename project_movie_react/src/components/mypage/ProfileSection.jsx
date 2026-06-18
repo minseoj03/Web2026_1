@@ -4,10 +4,12 @@ export default function ProfileSection({ stats, onEditProfile }) {
   const { user } = useAuth()
   const displayName = user?.nickname || '송이'
   const initial = displayName[0]
+  const bio = user?.bio || '영화가 좋은 사람 🎬'
+  const avatarColor = user?.color || 'from-[#ffd6a5] to-[#fdb88a]'
 
   return (
     <section className="bg-white rounded-2xl max-md:rounded-xl p-7 max-md:p-5 shadow-sm flex items-center gap-6 max-md:gap-4 mb-6 max-md:flex-col max-md:text-center">
-      <div className="w-[88px] h-[88px] max-md:w-[72px] max-md:h-[72px] rounded-full bg-gradient-to-br from-[#ffd6a5] to-[#fdb88a] grid place-items-center text-3xl max-md:text-2xl font-extrabold text-white shrink-0">
+      <div className={`w-[88px] h-[88px] max-md:w-[72px] max-md:h-[72px] rounded-full bg-gradient-to-br ${avatarColor} grid place-items-center text-3xl max-md:text-2xl font-extrabold text-white shrink-0`}>
         {initial}
       </div>
       <div className="flex-1">
@@ -17,7 +19,7 @@ export default function ProfileSection({ stats, onEditProfile }) {
             ✏️ 프로필 편집
           </button>
         </div>
-        <p className="text-sm max-md:text-xs text-gray-500">"영화가 좋은 사람 🎬"</p>
+        <p className="text-sm max-md:text-xs text-gray-500 break-words">“{bio}”</p>
       </div>
       <div className="flex gap-5 max-md:gap-3 max-md:flex-wrap max-md:justify-center">
         {[
