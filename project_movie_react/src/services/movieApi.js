@@ -339,8 +339,9 @@ export async function getOttRankingMovies(ottId) {
     return data.results
   }
 
+  const today = new Date().toISOString().slice(0, 10)
   const data = await fetchKoreanTitledMoviePages(
-    `/discover/movie?sort_by=popularity.desc&watch_region=KR&with_watch_providers=${providerId}`
+    `/discover/movie?sort_by=popularity.desc&watch_region=KR&with_watch_providers=${providerId}&with_watch_monetization_types=flatrate&include_adult=false&primary_release_date.lte=${today}&vote_count.gte=20`
   )
 
   return (data.results || []).map(movie => ({

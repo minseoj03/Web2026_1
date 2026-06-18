@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import MovieDetailModal from '../components/MovieDetailModal'
 import { useFilter } from '../contexts/FilterContext'
-import { getPopularMoviesWithOtt } from '../services/movieApi'
+import { getOttRankingMovies } from '../services/movieApi'
 
 const ottTabs = [
   { id: 'netflix', label: '넷플릭스', icon: 'N', color: 'bg-[#e50914]' },
@@ -45,19 +45,11 @@ export default function OttRanking() {
     setLoading(true)
     setError('')
 
-    getPopularMoviesWithOtt()
+    getOttRankingMovies(selectedOtt)
       .then((data) => {
         if (ignore) return
 
-        let nextMovies = data.results || []
-
-        if (selectedOtt !== 'all') {
-          nextMovies = nextMovies.filter(movie =>
-            Array.isArray(movie.ott) && movie.ott.includes(selectedOtt)
-          )
-        }
-
-        nextMovies = applyFilters(nextMovies)
+        const nextMovies = applyFilters(data || [])
 
         setMovies(
           nextMovies.slice(0, 10).map((movie, index) => ({
@@ -86,7 +78,7 @@ export default function OttRanking() {
     <div className="px-8 pb-8">
       <h1 className="text-2xl font-extrabold mb-1">OTT별 인기 영화 TOP</h1>
       <p className="text-sm text-gray-500 mb-6">
-        TMDB 인기 영화에 한국 기준 OTT 제공 정보를 붙여 보여드려요.
+        한국에서 해당 OTT로 볼 수 있는 영화를 TMDB 최신 인기도 순으로 보여드려요.
       </p>
 
       <div className="flex gap-2 flex-wrap mb-6">
