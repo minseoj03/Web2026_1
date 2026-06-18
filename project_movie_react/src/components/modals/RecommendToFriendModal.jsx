@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useToast } from '../Toast'
 import { useFriends } from '../../contexts/FriendContext'
 import { sendMovieRecommendation } from '../../services/recommendApi'
+import { useAuth } from '../../contexts/AuthContext'
 
 const MESSAGE_LIMIT = 120
 
@@ -13,6 +14,7 @@ export default function RecommendToFriendModal({ movie, isOpen, onClose }) {
   const [sending, setSending] = useState(false)
   const { addToast } = useToast()
   const { friends: allFriends } = useFriends()
+  const { user } = useAuth()
 
   useEffect(() => {
     if (!isOpen) {
@@ -52,7 +54,7 @@ export default function RecommendToFriendModal({ movie, isOpen, onClose }) {
     setSending(true)
 
     try {
-      await sendMovieRecommendation(movie, selectedFriends, message)
+      await sendMovieRecommendation(movie, selectedFriends, message, user?.id)
       const targetText = selectedFriends.length === 1
         ? `${selectedFriends[0].name}님`
         : `${selectedFriends[0].name}님 외 ${selectedFriends.length - 1}명`
@@ -118,6 +120,9 @@ export default function RecommendToFriendModal({ movie, isOpen, onClose }) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold">{friend.name}</p>
                     <p className="text-[11px] text-gray-400 truncate">{friend.email}</p>
+                    {friend.favoriteGenres?.length > 0 && (
+                      <p className="text-[10px] text-[#7c5cff] mt-0.5 truncate">취향: {friend.favoriteGenres.join(' · ')}</p>
+                    )}
                   </div>
                   <span className={`w-6 h-6 rounded-full border grid place-items-center text-xs ${selected.includes(friend.id) ? 'bg-[#7c5cff] text-white border-[#7c5cff]' : 'border-gray-200 text-gray-400'}`}>
                     {selected.includes(friend.id) ? '✓' : '+'}

@@ -1,11 +1,12 @@
 import { searchMovies } from './movieApi'
 import { getReceivedRecommendations } from './recommendApi'
+import { getMockUserById } from '../data/mockUsers'
 
 const mockNotifications = [
   {
     id: 1,
     type: 'movie_recommend_friend',
-    actorName: '민지',
+    actorId: 'user-minji',
     message: '정말 따뜻한 영화예요! 꼭 봐보세요 💜',
     movieTitle: '라라랜드',
     fallbackMovie: { title: '라라랜드', genre: '로맨스, 뮤지컬', rating: 4.5, gradient: 'from-[#fef3c7] to-[#fbbf24]' },
@@ -24,7 +25,7 @@ const mockNotifications = [
   {
     id: 3,
     type: 'movie_recommend_friend',
-    actorName: '호준',
+    actorId: 'user-hojun',
     message: '액션 좋아하면 무조건 봐야 해요! 🔥',
     movieTitle: '스파이더맨: 노 웨이 홈',
     fallbackMovie: { title: '스파이더맨: 노 웨이 홈', genre: '액션, SF', rating: 4.4, gradient: 'from-[#dc2626] to-[#ef4444]' },
@@ -34,7 +35,7 @@ const mockNotifications = [
   {
     id: 4,
     type: 'movie_recommend_friend',
-    actorName: '우진',
+    actorId: 'user-woojin',
     message: '반전이 미쳤어요! 꼭 보세요',
     movieTitle: '기생충',
     fallbackMovie: { title: '기생충', genre: '스릴러, 드라마', rating: 4.4, gradient: 'from-[#831843] to-[#be185d]' },
@@ -42,14 +43,20 @@ const mockNotifications = [
     read: true,
   },
   { id: 5, type: 'vote_result', roomName: '주말에 뭐 볼까?', movieTitle: '어바웃 타임', time: '25분 전', read: false },
-  { id: 6, type: 'vote_invite', actorName: '세영', roomName: '금요일 영화의 밤', time: '1시간 전', read: false },
-  { id: 7, type: 'realtime_review', actorName: '우진', movieTitle: '인터스텔라', rating: 4.8, time: '방금', read: false },
-  { id: 8, type: 'friend_add', actorName: '호준', time: '2일 전', read: true },
+  { id: 6, type: 'vote_invite', actorId: 'user-seyoung', roomName: '금요일 영화의 밤', time: '1시간 전', read: false },
+  { id: 7, type: 'realtime_review', actorId: 'user-woojin', movieTitle: '인터스텔라', rating: 4.8, time: '방금', read: false },
+  { id: 8, type: 'friend_add', actorId: 'user-hojun', time: '2일 전', read: true },
   { id: 9, type: 'vote_result', roomName: '감성 로맨스 모임', movieTitle: '비포 선라이즈', time: '3일 전', read: true },
 ]
 
 async function attachMovie(notification) {
-  if (!notification.movieTitle) return notification
+  const hydratedNotification = {
+    ...notification,
+    actorName: notification.actorId
+      ? getMockUserById(notification.actorId)?.name || '친구'
+      : notification.actorName,
+  }
+  if (!notification.movieTitle) return hydratedNotification
 
   try {
     const results = await searchMovies(notification.movieTitle)
@@ -57,13 +64,13 @@ async function attachMovie(notification) {
 
     if (!movie) {
       return {
-        ...notification,
+        ...hydratedNotification,
         movie: notification.fallbackMovie,
       }
     }
 
     return {
-      ...notification,
+      ...hydratedNotification,
       movie: {
         ...movie,
         title: movie.title || notification.movieTitle,
@@ -76,14 +83,14 @@ async function attachMovie(notification) {
   } catch (error) {
     console.error('[Notification movie]', error)
     return {
-      ...notification,
+      ...hydratedNotification,
       movie: notification.fallbackMovie,
     }
   }
 }
 
-function getRecommendationNotifications() {
-  return getReceivedRecommendations().map(item => ({
+function getRecommendationNotifications(currentUserId) {
+  return getReceivedRecommendations(currentUserId).map(item => ({
     id: item.id,
     type: 'movie_recommend_friend',
     actorName: item.senderName || '친구',
@@ -95,10 +102,10 @@ function getRecommendationNotifications() {
   }))
 }
 
-export async function getNotifications(category = 'all') {
+export async function getNotifications(category = 'all', currentUserId) {
   await new Promise(resolve => setTimeout(resolve, 300))
   const notifications = await Promise.all(mockNotifications.map(attachMovie))
-  const recommendationNotifications = getRecommendationNotifications()
+  const recommendationNotifications = getRecommendationNotifications(currentUserId)
   const result = [...recommendationNotifications, ...notifications]
 
   if (category === 'all') return result
@@ -106,6 +113,7 @@ export async function getNotifications(category = 'all') {
 }
 
 export async function markNotificationRead(id) {
+  void id
   await new Promise(resolve => setTimeout(resolve, 150))
   return { success: true }
 }

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../services/notificationApi'
+import { useAuth } from './AuthContext'
 
 const NotifContext = createContext()
 const READ_STORAGE_KEY = 'moviemate_read_notifications'
@@ -17,13 +18,14 @@ function saveStoredReadIds(ids) {
 }
 
 export function NotifProvider({ children }) {
+  const { user } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
   const refreshNotifications = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await getNotifications()
+      const data = await getNotifications('all', user?.id)
       const readIds = new Set(getStoredReadIds())
       setNotifications(data.map(notification => ({
         ...notification,
@@ -32,10 +34,15 @@ export function NotifProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
     refreshNotifications()
+  }, [refreshNotifications])
+
+  useEffect(() => {
+    window.addEventListener('moviemate:recommendations-updated', refreshNotifications)
+    return () => window.removeEventListener('moviemate:recommendations-updated', refreshNotifications)
   }, [refreshNotifications])
 
   const unreadCount = useMemo(

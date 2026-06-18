@@ -7,7 +7,7 @@
  * - 서버에서 MongoDB 유저 정보 조회 후 JWT + user 반환
  */
 
-const API_BASE = '/api' // TODO: import.meta.env.VITE_API_URL
+import { getMockUserByEmail } from '../data/mockUsers'
 
 /**
  * 로그인 API
@@ -43,11 +43,27 @@ export async function loginApi(email, password) {
     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
   }
 
-  // 일반 유저
+  // 등록된 mock 계정은 고정 ID와 취향 데이터를 사용합니다.
+  const mockUser = getMockUserByEmail(email)
+  if (mockUser) {
+    return {
+      token: `demo-jwt-token-${mockUser.id}`,
+      user: {
+        ...mockUser,
+        theme: mockUser.theme || 'light',
+        lang: mockUser.lang || 'ko',
+        region: mockUser.region || 'kr',
+        verified: mockUser.verified ?? true,
+      },
+    }
+  }
+
+  // 등록되지 않은 이메일도 체험할 수 있도록 안정적인 ID를 만듭니다.
   const nickname = email.split('@')[0]
+  const stableId = email.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
   return {
     token: 'demo-jwt-token-user',
-    user: { id: `user-${Date.now()}`, nickname, email, role: 'user', ott: ['netflix', 'wavve', 'disney'], theme: 'light', lang: 'ko', region: 'kr', verified: false },
+    user: { id: `user-${stableId}`, nickname, email, role: 'user', ott: ['netflix', 'wavve', 'disney'], theme: 'light', lang: 'ko', region: 'kr', verified: false },
   }
   // ─────────────────────────────────────────────────────────────────
 }
@@ -94,6 +110,7 @@ export async function signupApi(data) {
  * @returns {{ user: object }}
  */
 export async function verifyToken(token) {
+  void token
   // TODO [API 연결]: 실제 API 호출로 교체
   // const response = await fetch(`${API_BASE}/auth/verify`, {
   //   headers: { 'Authorization': `Bearer ${token}` },
