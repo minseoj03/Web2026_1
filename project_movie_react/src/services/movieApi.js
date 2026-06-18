@@ -73,6 +73,27 @@ const friendReactionMock = [
   { movieTitle: '서울의 봄', genreIds: [18], rating: 4.7, reaction: 'recommended' },
 ]
 const KOREAN_TITLE_REGEX = /[가-힣]/
+const SEARCH_QUERY_ALIASES = {
+  토이스토리: '토이 스토리',
+  인사이드아웃: '인사이드 아웃',
+  스파이더맨: '스파이더맨',
+  해리포터: '해리 포터',
+  스타워즈: '스타 워즈',
+  반지의제왕: '반지의 제왕',
+  미션임파서블: '미션 임파서블',
+  가디언즈오브갤럭시: '가디언즈 오브 갤럭시',
+  너의이름은: '너의 이름은',
+}
+
+function compactMovieTitle(value = '') {
+  return value.toLowerCase().replace(/[\s:：\-–—·.,!?'"()[\]]/g, '')
+}
+
+function getSearchQueries(query) {
+  const trimmedQuery = query.trim()
+  const alias = SEARCH_QUERY_ALIASES[compactMovieTitle(trimmedQuery)]
+  return [...new Set([trimmedQuery, alias].filter(Boolean))]
+}
 
 function hasKoreanDisplayTitle(movie) {
   return KOREAN_TITLE_REGEX.test(movie?.title || '')
@@ -339,10 +360,25 @@ export async function getPersonalRecommendation() {
 }
 
 export async function searchMovies(query) {
-  const data = await fetchTmdb(
-    `/search/movie?query=${encodeURIComponent(query)}&language=ko-KR&region=KR&page=1`
+  const searchQueries = getSearchQueries(query)
+  const responses = await Promise.all(
+    searchQueries.map(searchQuery => fetchTmdb(
+      `/search/movie?query=${encodeURIComponent(searchQuery)}&language=ko-KR&region=KR&page=1`
+    ))
   )
+  const uniqueResults = [...new Map(
+    responses
+      .flatMap(response => response.results || [])
+      .map(movie => [movie.id, movie])
+  ).values()]
+  const compactQuery = compactMovieTitle(query)
+
+  uniqueResults.sort((a, b) => {
+    const aExact = compactMovieTitle(a.title) === compactQuery ? 1 : 0
+    const bExact = compactMovieTitle(b.title) === compactQuery ? 1 : 0
+    return bExact - aExact
+  })
 
   const isKoreanQuery = KOREAN_TITLE_REGEX.test(query)
-  return preferKoreanTitledMovies(data.results || [], !isKoreanQuery)
+  return preferKoreanTitledMovies(uniqueResults, !isKoreanQuery)
 }
