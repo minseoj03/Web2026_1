@@ -90,7 +90,10 @@ export default function MovieScrollSection({
               <MoviePosterCardSkeleton count={5} />
             ) : filteredMovies.length > 0 ? (
               filteredMovies.map(movie => (
-                <div key={`${type}-${movie.localId || movie.id}`} className="relative">
+                <div
+                  key={`${type}-${movie.localId || movie.id}`}
+                  className="relative shrink-0 w-[clamp(110px,10vw,140px)] max-md:w-[105px] min-w-0"
+                >
                   <MoviePosterCard
                     movie={movie}
                     type={type}

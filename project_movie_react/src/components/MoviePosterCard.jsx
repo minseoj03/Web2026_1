@@ -4,7 +4,7 @@ export default function MoviePosterCard({ movie, type = 'watched', onClick, onRe
   return (
     <div
       onClick={() => onClick?.(movie)}
-      className="shrink-0 w-[calc((100%-64px)/5)] min-w-[clamp(100px,10vw,130px)] max-lg:w-[calc((100%-32px)/3)] max-md:w-[calc((100%-16px)/2.5)] max-md:min-w-[clamp(90px,9vw,110px)] group cursor-pointer hover:-translate-y-1 transition"
+      className="w-full min-w-0 group cursor-pointer hover:-translate-y-1 transition"
     >
       <div className={`aspect-[2/3] rounded-xl bg-gradient-to-br ${gradient || 'from-gray-400 to-gray-600'} grid place-items-center text-white font-extrabold text-sm p-3 text-center shadow-sm mb-2 relative overflow-hidden`}>
         {posterPath ? (
@@ -53,7 +53,7 @@ export function MoviePosterCardSkeleton({ count = 5 }) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="shrink-0 w-[calc((100%-64px)/5)] min-w-[clamp(100px,10vw,130px)] max-lg:w-[calc((100%-32px)/3)] max-md:w-[calc((100%-16px)/2.5)] max-md:min-w-[clamp(90px,9vw,110px)] animate-pulse">
+        <div key={index} className="shrink-0 w-[clamp(110px,10vw,140px)] max-md:w-[105px] min-w-0 animate-pulse">
           <div className="aspect-[2/3] bg-gray-200 rounded-xl mb-2" />
           <div className="h-4 bg-gray-200 rounded w-3/4 mb-1.5" />
           <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
