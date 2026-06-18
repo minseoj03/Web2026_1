@@ -179,13 +179,13 @@ export default function Friends() {
             {recommendationTab === 'sent' ? (
               <div className="flex flex-col gap-3">
                 {sentRecommendations.length > 0 ? sentRecommendations.map(item => (
-                  <div key={item.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+                  <div key={item.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm overflow-hidden">
                     <div className="flex gap-3">
                       <MovieThumb movie={item.movie} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-extrabold truncate">{item.movie.title}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-extrabold leading-snug line-clamp-2 break-words">{item.movie.title}</p>
                             <p className="text-[11px] text-gray-400 mt-0.5">{formatRecommendationDate(item.sentAt)}</p>
                           </div>
                           <span className="px-2 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-bold shrink-0">알림 전달됨</span>
@@ -198,7 +198,7 @@ export default function Friends() {
                             </span>
                           ))}
                         </div>
-                        <p className="text-xs text-gray-600 bg-gray-100 rounded-lg p-2.5 mt-2">“{item.message}”</p>
+                        <p className="text-xs text-gray-600 bg-gray-100 rounded-lg p-2.5 mt-2 break-words">“{item.message}”</p>
                       </div>
                     </div>
                   </div>
@@ -207,18 +207,18 @@ export default function Friends() {
             ) : (
               <div className="flex flex-col gap-3">
                 {receivedRecommendations.length > 0 ? receivedRecommendations.map(item => (
-                  <div key={item.id} className="bg-white border border-[#9b85ff]/40 rounded-xl p-4 shadow-sm">
+                  <div key={item.id} className="bg-white border border-[#9b85ff]/40 rounded-xl p-4 shadow-sm overflow-hidden">
                     <div className="flex gap-3">
                       <MovieThumb movie={item.movie} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <p className="text-[11px] font-bold text-[#7c5cff]">{item.senderName}님이 추천했어요</p>
-                            <p className="text-sm font-extrabold truncate mt-0.5">{item.movie.title}</p>
+                            <p className="text-sm font-extrabold leading-snug line-clamp-2 break-words mt-0.5">{item.movie.title}</p>
                           </div>
                           <span className="text-[10px] text-gray-400 shrink-0">{formatRecommendationDate(item.receivedAt)}</span>
                         </div>
-                        <p className="text-xs text-gray-600 bg-[#faf8ff] rounded-lg p-2.5 mt-2">“{item.message}”</p>
+                        <p className="text-xs text-gray-600 bg-[#faf8ff] rounded-lg p-2.5 mt-2 break-words">“{item.message}”</p>
                         <div className="flex gap-2 mt-3 flex-wrap">
                           <button onClick={() => setSelectedMovie(item.movie)} className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold hover:border-[#7c5cff] hover:text-[#7c5cff]">상세보기</button>
                           <button onClick={() => handleWishlist(item)} className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-bold hover:border-[#7c5cff] hover:text-[#7c5cff]">{item.reaction === 'wishlisted' ? '찜 완료' : '찜하기'}</button>
