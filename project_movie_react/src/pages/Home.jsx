@@ -5,23 +5,20 @@ import HeroSection from '../components/home/HeroSection'
 import EmotionSection from '../components/home/EmotionSection'
 import { HomeSidebarSkeleton } from '../components/Skeleton'
 import { getPopularMovies } from '../services/movieApi'
-
-const friendActivities = [
-  { name: '우진', initial: '우', color: 'from-[#93c5fd] to-[#2563eb]', desc: '"어바웃 타임" ★ 4.5 평가', time: '30분 전' },
-  { name: '세영', initial: '세', color: 'from-[#d8b4fe] to-[#9333ea]', desc: '"인터스텔라" 시청 완료 🎬', time: '1시간 전' },
-  { name: '민지', initial: '민', color: 'from-[#fda4af] to-[#f43f5e]', desc: '"기생충" ★ 5.0 평가', time: '5시간 전' },
-]
-
-const notifications = [
-  { icon: '💜', text: '민지님이 "라라랜드"를 추천했어요', time: '10분 전' },
-  { icon: '🗳️', text: '"주말에 뭐 볼까?" 투표 결과가 나왔어요', time: '25분 전' },
-  { icon: '👥', text: '세영님이 투표방에 초대했어요', time: '1시간 전' },
-]
+import { useNotif } from '../contexts/NotifContext'
+import { resolveNotification } from '../notifications/template'
+import { useFriends } from '../contexts/FriendContext'
+import { getFriendActivities } from '../services/friendApi'
 
 export default function Home() {
   const [selectedMovie, setSelectedMovie] = useState(null)
   const [popularMovies, setPopularMovies] = useState([])
   const [popularLoading, setPopularLoading] = useState(true)
+  const [friendActivities, setFriendActivities] = useState([])
+  const [activitiesLoading, setActivitiesLoading] = useState(true)
+  const { notifications, loading: notificationsLoading } = useNotif()
+  const { friends } = useFriends()
+  const recentNotifications = notifications.slice(0, 3)
 
   useEffect(() => {
     getPopularMovies()
@@ -31,6 +28,25 @@ export default function Home() {
       .catch(() => setPopularMovies([]))
       .finally(() => setPopularLoading(false))
   }, [])
+
+  useEffect(() => {
+    let ignore = false
+
+    getFriendActivities(friends.map(friend => friend.id))
+      .then(data => {
+        if (!ignore) setFriendActivities(data.slice(0, 3))
+      })
+      .catch(() => {
+        if (!ignore) setFriendActivities([])
+      })
+      .finally(() => {
+        if (!ignore) setActivitiesLoading(false)
+      })
+
+    return () => {
+      ignore = true
+    }
+  }, [friends])
 
   return (
     <>
@@ -47,18 +63,33 @@ export default function Home() {
               <Link to="/friends" className="text-xs text-gray-500 hover:text-[#7c5cff]">더보기 ›</Link>
             </div>
             <div className="flex flex-col gap-3">
-              {friendActivities.map(activity => (
-                <div key={activity.name} className="flex items-center gap-2.5">
-                  <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${activity.color} grid place-items-center text-white font-bold text-sm shrink-0`}>
-                    {activity.initial}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold">{activity.name}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{activity.desc}</p>
-                    <p className="text-[10px] text-gray-400">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
+              {activitiesLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="h-11 rounded-lg bg-gray-100 animate-pulse" />
+                ))
+              ) : friendActivities.length > 0 ? (
+                friendActivities.map(activity => (
+                  <button
+                    key={activity.id}
+                    type="button"
+                    onClick={() => setSelectedMovie(activity.movieDetail)}
+                    className="flex items-center gap-2.5 text-left hover:bg-gray-50 rounded-lg transition"
+                  >
+                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${activity.color} grid place-items-center text-white font-bold text-sm shrink-0`}>
+                      {activity.initial}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold">{activity.name}</p>
+                      <p className="text-[11px] text-gray-500 truncate">
+                        “{activity.movie}” {activity.type === 'review' ? `★ ${activity.rating} 평가` : '시청 완료 🎬'}
+                      </p>
+                      <p className="text-[10px] text-gray-400">{activity.time}</p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <p className="py-3 text-center text-xs text-gray-400">친구들의 최근 활동이 없어요.</p>
+              )}
             </div>
           </section>
 
@@ -68,15 +99,30 @@ export default function Home() {
               <Link to="/notifications" className="text-xs text-gray-500 hover:text-[#7c5cff]">더보기 ›</Link>
             </div>
             <div className="flex flex-col gap-2.5">
-              {notifications.map((notification, index) => (
-                <div key={index} className="flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100 last:border-0 last:pb-0">
-                  <span className="flex items-center gap-1.5 min-w-0 text-xs text-gray-700">
-                    <span className="shrink-0">{notification.icon}</span>
-                    <span className="truncate">{notification.text}</span>
-                  </span>
-                  <span className="text-[10px] text-gray-400 shrink-0">{notification.time}</span>
-                </div>
-              ))}
+              {notificationsLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="h-7 rounded-lg bg-gray-100 animate-pulse" />
+                ))
+              ) : recentNotifications.length > 0 ? (
+                recentNotifications.map(notification => {
+                  const resolved = resolveNotification(notification)
+                  return (
+                    <Link
+                      key={notification.id}
+                      to="/notifications"
+                      className={`flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100 last:border-0 last:pb-0 hover:text-[#7c5cff] transition ${notification.read ? 'opacity-55' : ''}`}
+                    >
+                      <span className="flex items-center gap-1.5 min-w-0 text-xs">
+                        <span className="shrink-0">{resolved.icon}</span>
+                        <span className="truncate">{resolved.title}</span>
+                      </span>
+                      <span className="text-[10px] text-gray-400 shrink-0">{notification.time}</span>
+                    </Link>
+                  )
+                })
+              ) : (
+                <p className="py-3 text-center text-xs text-gray-400">새로운 알림이 없어요.</p>
+              )}
             </div>
           </section>
 

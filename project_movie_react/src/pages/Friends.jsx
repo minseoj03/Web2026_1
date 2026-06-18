@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import MovieDetailModal from '../components/MovieDetailModal'
 import { FriendActivitySkeleton } from '../components/friends/FriendActivityCard'
 import { useFriends } from '../contexts/FriendContext'
@@ -7,6 +7,7 @@ import { useToast } from '../components/Toast'
 import { getFriendActivities } from '../services/friendApi'
 import { searchMovies } from '../services/movieApi'
 import { getReceivedRecommendations, getSentRecommendations, updateReceivedRecommendation } from '../services/recommendApi'
+import { useAuth } from '../contexts/AuthContext'
 
 function formatRecommendationDate(value) {
   if (!value) return ''
@@ -30,8 +31,9 @@ export default function Friends() {
   const { friends, removeFriend } = useFriends()
   const { addToWishlist, isWishlisted } = useWishlist()
   const { addToast } = useToast()
+  const { user } = useAuth()
 
-  const enrichRecommendationMovies = async (recommendations) => {
+  const enrichRecommendationMovies = useCallback(async (recommendations) => {
     return Promise.all(recommendations.map(async (item) => {
       if (item.movie?.posterPath) return item
 
@@ -58,43 +60,43 @@ export default function Friends() {
         return item
       }
     }))
-  }
+  }, [])
 
-  const refreshRecommendations = async () => {
+  const refreshRecommendations = useCallback(async () => {
     const [sent, received] = await Promise.all([
-      enrichRecommendationMovies(getSentRecommendations()),
-      enrichRecommendationMovies(getReceivedRecommendations()),
+      enrichRecommendationMovies(getSentRecommendations(user?.id)),
+      enrichRecommendationMovies(getReceivedRecommendations(user?.id)),
     ])
     setSentRecommendations(sent)
     setReceivedRecommendations(received)
-  }
+  }, [enrichRecommendationMovies, user?.id])
 
   useEffect(() => {
     setLoading(true)
-    getFriendActivities()
+    getFriendActivities(friends.map(friend => friend.id))
       .then(data => setActivities(data))
       .finally(() => setLoading(false))
-  }, [])
+  }, [friends])
 
   useEffect(() => {
     refreshRecommendations()
     window.addEventListener('moviemate:recommendations-updated', refreshRecommendations)
     return () => window.removeEventListener('moviemate:recommendations-updated', refreshRecommendations)
-  }, [])
+  }, [refreshRecommendations])
 
   const filteredFriends = friendSearch
     ? friends.filter(friend => friend.name.includes(friendSearch) || friend.email.includes(friendSearch.toLowerCase()))
     : friends
 
   const handleThanks = (item) => {
-    updateReceivedRecommendation(item.id, { reaction: 'thanks', read: true })
+    updateReceivedRecommendation(item.id, user?.id, { reaction: 'thanks', read: true })
     refreshRecommendations()
     addToast('추천한 친구에게 고마워요 반응을 보냈어요 💜', { type: 'success' })
   }
 
   const handleWishlist = (item) => {
     if (!isWishlisted(item.movie.id)) addToWishlist(item.movie)
-    updateReceivedRecommendation(item.id, { reaction: 'wishlisted', read: true })
+    updateReceivedRecommendation(item.id, user?.id, { reaction: 'wishlisted', read: true })
     refreshRecommendations()
     addToast(`“${item.movie.title}”을 찜 목록에 추가했어요.`, { type: 'success' })
   }
@@ -244,6 +246,11 @@ export default function Friends() {
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-bold">{friend.name}</span>
                     <p className="text-[11px] text-gray-500">{friend.email}</p>
+                    <div className="flex items-center gap-1 mt-1 flex-wrap">
+                      {friend.favoriteGenres?.map(genre => (
+                        <span key={genre} className="px-1.5 py-0.5 rounded-full bg-[#f3f0ff] text-[#7c5cff] text-[9px] font-semibold">{genre}</span>
+                      ))}
+                    </div>
                   </div>
                   <button onClick={() => { if (confirm('친구를 삭제하시겠어요?')) removeFriend(friend.id) }} className="px-2.5 py-1.5 text-[11px] font-semibold text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition shrink-0">삭제</button>
                 </div>

@@ -4,15 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useFilter } from '../contexts/FilterContext'
 import { useNotif } from '../contexts/NotifContext'
 import { useFriends } from '../contexts/FriendContext'
-
-const OTT_MAP = {
-  netflix: { icon: 'N', color: 'bg-[#e50914]', label: '넷플릭스' },
-  wavve: { icon: 'W', color: 'bg-[#1a73e8]', label: '웨이브' },
-  disney: { icon: 'D+', color: 'bg-[#113cff]', label: '디즈니+' },
-  tving: { icon: 'T', color: 'bg-[#ff153c]', label: '티빙' },
-  coupang: { icon: 'C', color: 'bg-[#00b8e6]', label: '쿠팡플레이' },
-  watcha: { icon: 'W', color: 'bg-[#ff0558]', label: '왓챠' },
-}
+import { getDiscoverableUsers } from '../data/mockUsers'
 
 export default function GNB({ isMobile, onHamburgerClick }) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -23,7 +15,6 @@ export default function GNB({ isMobile, onHamburgerClick }) {
   const navigate = useNavigate()
   const dropdownRef = useRef(null)
 
-  const userOtt = user?.ott || []
   const displayName = user?.nickname || '송이'
   const initial = displayName[0]
 
@@ -67,7 +58,7 @@ export default function GNB({ isMobile, onHamburgerClick }) {
         {/* Profile */}
         <div className="relative shrink-0" ref={dropdownRef}>
           <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-1.5 px-2.5 py-1 pl-1 border border-gray-200 rounded-full bg-white cursor-pointer hover:border-[#9b85ff] transition">
-            <span className="w-7 h-7 rounded-full bg-gradient-to-br from-[#ffd6a5] to-[#fdb88a] grid place-items-center text-white text-xs font-bold shrink-0">{initial}</span>
+            <span className={`w-7 h-7 rounded-full bg-gradient-to-br ${user?.color || 'from-[#ffd6a5] to-[#fdb88a]'} grid place-items-center text-white text-xs font-bold shrink-0`}>{initial}</span>
             <span className="text-xs font-semibold max-md:hidden">{displayName}</span>
             <span className="text-gray-400 text-[10px]">▾</span>
           </button>
@@ -88,15 +79,9 @@ export default function GNB({ isMobile, onHamburgerClick }) {
 function AddFriendModal({ onClose }) {
   const [query, setQuery] = useState('')
   const [added, setAdded] = useState([])
-  const { addFriend } = useFriends()
-
-  const users = [
-    { name: '호준', email: 'hojun@email.com', initial: '호', gradient: 'from-[#fbbf24] to-[#f59e0b]' },
-    { name: '수현', email: 'suhyun@email.com', initial: '수', gradient: 'from-[#a78bfa] to-[#7c3aed]' },
-    { name: '다은', email: 'daeun@email.com', initial: '다', gradient: 'from-[#fda4af] to-[#f43f5e]' },
-    { name: '준서', email: 'junseo@email.com', initial: '준', gradient: 'from-[#93c5fd] to-[#2563eb]' },
-    { name: '하윤', email: 'hayoon@email.com', initial: '하', gradient: 'from-[#86efac] to-[#16a34a]' },
-  ]
+  const { user } = useAuth()
+  const { friends, addFriend } = useFriends()
+  const users = getDiscoverableUsers(user?.id, friends.map(friend => friend.id))
 
   const filtered = query ? users.filter(u => u.email.includes(query.toLowerCase()) || u.name.includes(query)) : users
   const toggleAdd = (email) => setAdded(prev => prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email])
@@ -116,8 +101,12 @@ function AddFriendModal({ onClose }) {
         <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto mb-5">
           {filtered.map(u => (
             <div key={u.email} className={`flex items-center gap-3 p-3 border rounded-xl transition cursor-pointer ${added.includes(u.email) ? 'border-[#7c5cff] bg-[#faf8ff]' : 'border-gray-200 hover:border-[#9b85ff]'}`} onClick={() => toggleAdd(u.email)}>
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.gradient} grid place-items-center text-white font-extrabold text-sm shrink-0`}>{u.initial}</div>
-              <div className="flex-1 min-w-0"><div className="text-sm font-bold">{u.name}</div><div className="text-[11px] text-gray-500">{u.email}</div></div>
+              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} grid place-items-center text-white font-extrabold text-sm shrink-0`}>{u.initial}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold">{u.name}</div>
+                <div className="text-[11px] text-gray-500">{u.email}</div>
+                <div className="text-[10px] text-[#7c5cff] mt-0.5 truncate">{u.favoriteGenres.join(' · ')}</div>
+              </div>
               <span className={`w-8 h-8 rounded-full border grid place-items-center text-base shrink-0 transition ${added.includes(u.email) ? 'bg-[#7c5cff] text-white border-[#7c5cff]' : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-[#7c5cff] hover:text-white hover:border-[#7c5cff]'}`}>{added.includes(u.email) ? '✓' : '+'}</span>
             </div>
           ))}

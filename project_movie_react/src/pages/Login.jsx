@@ -167,7 +167,8 @@ export default function Login() {
           <div className="mt-6 p-3 bg-gray-50 rounded-xl text-[11px] text-gray-500">
             <p className="font-bold text-gray-600 mb-1">🧪 데모 계정</p>
             <p>관리자: admin@moviemate.com / admin123</p>
-            <p>일반: 아무 이메일 / 4자 이상 비밀번호</p>
+            <p>일반: songi@moviemate.com / movie1234</p>
+            <p>등록된 사용자 데이터와 친구·추천 기록을 확인할 수 있어요.</p>
           </div>
         </form>
       </div>

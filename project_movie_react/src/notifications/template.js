@@ -12,7 +12,9 @@ export const NOTIFICATION_TEMPLATE = {
     label: '추천 알림',
     labelColor: 'text-[#db2777]',
     bgColor: 'bg-[#fce7f3]',
-    title: ({ actorName }) => `${actorName}님이 영화를 추천했어요`,
+    title: ({ actorName, movieTitle }) => movieTitle
+      ? `${actorName}님이 "${movieTitle}"를 추천했어요`
+      : `${actorName}님이 영화를 추천했어요`,
     desc: ({ message }) => message || '추천 영화를 확인해보세요!',
     hasMovie: true,
   },
