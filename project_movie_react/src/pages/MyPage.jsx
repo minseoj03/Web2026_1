@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useFriends } from '../contexts/FriendContext'
 import { useWishlist } from '../contexts/WishlistContext'
-import { getWatchedMovies } from '../services/mypageApi'
+import {
+  addWatchedMovie,
+  deleteWatchedMovie,
+  getWatchedMovies,
+  updateWatchedMovie,
+} from '../services/mypageApi'
 import ProfileSection from '../components/mypage/ProfileSection'
 import MovieScrollSection from '../components/mypage/MovieScrollSection'
 import MovieDetailModal from '../components/MovieDetailModal'
@@ -77,12 +82,13 @@ export default function MyPage() {
     }
   }, [wishlist, wishlistSortType])
 
-  const handleAddMovie = (movie) => {
+  const handleAddMovie = async (movie) => {
     if (addMovieType === 'watched') {
-      setWatched(prev => [{
-        ...movie,
-        date: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-      }, ...prev])
+      const savedMovie = await addWatchedMovie(user?.id, movie)
+      setWatched(prev => [
+        savedMovie,
+        ...prev.filter(item => getMovieKey(item) !== getMovieKey(savedMovie)),
+      ])
       return
     }
     addToWishlist(movie)
@@ -90,11 +96,18 @@ export default function MyPage() {
 
   const getMovieKey = (movie) => movie.localId || movie.id
 
-  const handleUpdateWatchedMovie = (updatedMovie) => {
+  const handleUpdateWatchedMovie = async (updatedMovie) => {
+    const savedMovie = await updateWatchedMovie(user?.id, updatedMovie)
     setWatched(prev => prev.map(movie => (
-      getMovieKey(movie) === getMovieKey(updatedMovie) ? { ...movie, ...updatedMovie } : movie
+      getMovieKey(movie) === getMovieKey(savedMovie) ? savedMovie : movie
     )))
     setEditingMovie(null)
+  }
+
+  const handleDeleteWatchedMovie = async (movie) => {
+    const movieId = getMovieKey(movie)
+    await deleteWatchedMovie(user?.id, movieId)
+    setWatched(prev => prev.filter(item => getMovieKey(item) !== movieId))
   }
 
   const stats = {
@@ -165,7 +178,7 @@ export default function MyPage() {
             }}
             onRecommend={setRecommendMovie}
             onEdit={setEditingMovie}
-            onDelete={(movie) => setWatched(prev => prev.filter(item => item.id !== movie.id))}
+            onDelete={handleDeleteWatchedMovie}
             onRetry={fetchWatched}
           />
         )}
@@ -218,7 +231,6 @@ export default function MyPage() {
         onClose={() => setAddMovieModalOpen(false)}
         onAdd={handleAddMovie}
         type={addMovieType}
-        userOtt={user?.ott || []}
       />
     </>
   )

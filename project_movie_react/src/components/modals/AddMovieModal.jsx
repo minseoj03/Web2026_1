@@ -45,7 +45,7 @@ function normalizeMovie(movie) {
   }
 }
 
-export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched', userOtt = [] }) {
+export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched' }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -75,11 +75,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
           }))
         )
 
-        const filtered = userOtt.length > 0
-          ? withOtt.filter(movie => movie.ott?.some(ott => userOtt.includes(ott)))
-          : withOtt
-
-        setResults(filtered.map(normalizeMovie))
+        setResults(withOtt.map(normalizeMovie))
       } catch (error) {
         console.error('[MyPage movie search]', error)
         setResults([])
@@ -89,7 +85,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
     }, query.trim() ? 300 : 0)
 
     return () => clearTimeout(debounceRef.current)
-  }, [isOpen, query, userOtt])
+  }, [isOpen, query])
 
   useEffect(() => {
     if (!isOpen) {
@@ -104,7 +100,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
 
   if (!isOpen) return null
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!selected) return
 
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.')
@@ -116,14 +112,10 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
       addedDate: today,
     }
 
-    onAdd?.(movie)
+    await onAdd?.(movie)
     addToast(type === 'watched' ? `"${selected.title}" 추가 완료! 🎬` : `"${selected.title}" 찜 완료! 💗`, { type: 'success' })
     onClose()
   }
-
-  const selectedOttText = userOtt.length > 0
-    ? userOtt.map(ott => ottLabels[ott] || ott).join(', ')
-    : '전체 OTT'
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[1000] grid place-items-center" onClick={onClose} role="dialog">
@@ -131,7 +123,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-lg font-extrabold">영화 추가</h2>
-            <p className="text-xs text-gray-500 mt-1">선택한 OTT 기준: {selectedOttText}</p>
+            <p className="text-xs text-gray-500 mt-1">모든 OTT의 영화를 검색하고 추가할 수 있어요.</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 grid place-items-center text-sm text-gray-500 hover:text-[#7c5cff]" aria-label="닫기">×</button>
         </div>
@@ -210,7 +202,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
             <EmptyState
               icon="🔎"
               title="검색 결과가 없어요"
-              description="설정에서 선택한 OTT에 있는 영화만 표시돼요. 다른 검색어를 입력하거나 OTT 설정을 확인해보세요."
+              description="다른 영화 제목으로 검색해보세요."
             />
           )}
         </div>

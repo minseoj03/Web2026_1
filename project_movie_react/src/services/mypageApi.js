@@ -16,6 +16,28 @@ const wishlistMock = [
   { id: 'wl5', title: '엘리멘탈', genre: '애니메이션', gradient: 'from-[#0c4a6e] to-[#0ea5e9]', addedDate: '2024.03.30' },
 ]
 
+const WATCHED_STORAGE_PREFIX = 'moviemate_watched_movies_'
+
+function getWatchedStorageKey(userId) {
+  return `${WATCHED_STORAGE_PREFIX}${userId || 'guest'}`
+}
+
+function readWatchedMovies(userId) {
+  try {
+    const saved = localStorage.getItem(getWatchedStorageKey(userId))
+    return saved ? JSON.parse(saved) : watchedMock
+  } catch {
+    return watchedMock
+  }
+}
+
+function writeWatchedMovies(userId, movies) {
+  localStorage.setItem(getWatchedStorageKey(userId), JSON.stringify(movies))
+  window.dispatchEvent(new CustomEvent('moviemate:watched-updated', {
+    detail: { userId },
+  }))
+}
+
 async function attachTmdbMovie(movie) {
   try {
     const results = await searchMovies(movie.title)
@@ -45,7 +67,7 @@ async function attachTmdbMovie(movie) {
 
 export async function getWatchedMovies(userId) {
   await new Promise(resolve => setTimeout(resolve, 300))
-  return Promise.all(watchedMock.map(attachTmdbMovie))
+  return Promise.all(readWatchedMovies(userId).map(attachTmdbMovie))
 }
 
 export async function getWishlistMovies(userId) {
@@ -55,15 +77,39 @@ export async function getWishlistMovies(userId) {
 
 export async function addWatchedMovie(userId, movie) {
   await new Promise(resolve => setTimeout(resolve, 200))
-  return {
+  const current = readWatchedMovies(userId)
+  const movieId = movie.localId || movie.id
+  const savedMovie = {
     ...movie,
-    id: movie.id || `w-${Date.now()}`,
-    date: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+    id: movieId || `watched-${Date.now()}`,
+    date: movie.date || new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
   }
+  writeWatchedMovies(userId, [
+    savedMovie,
+    ...current.filter(item => (item.localId || item.id) !== movieId),
+  ])
+  return attachTmdbMovie(savedMovie)
+}
+
+export async function updateWatchedMovie(userId, movie) {
+  await new Promise(resolve => setTimeout(resolve, 150))
+  const movieId = movie.localId || movie.id
+  const next = readWatchedMovies(userId).map(item => (
+    (item.localId || item.id) === movieId
+      ? { ...item, ...movie, id: item.id }
+      : item
+  ))
+  writeWatchedMovies(userId, next)
+  const updated = next.find(item => (item.localId || item.id) === movieId)
+  return updated ? attachTmdbMovie(updated) : movie
 }
 
 export async function deleteWatchedMovie(userId, movieId) {
   await new Promise(resolve => setTimeout(resolve, 200))
+  writeWatchedMovies(
+    userId,
+    readWatchedMovies(userId).filter(item => (item.localId || item.id) !== movieId)
+  )
   return { success: true }
 }
 
