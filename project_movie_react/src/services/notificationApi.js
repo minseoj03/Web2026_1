@@ -1,4 +1,5 @@
 import { searchMovies } from './movieApi'
+import { getReceivedRecommendations } from './recommendApi'
 
 const mockNotifications = [
   {
@@ -81,12 +82,27 @@ async function attachMovie(notification) {
   }
 }
 
+function getRecommendationNotifications() {
+  return getReceivedRecommendations().map(item => ({
+    id: item.id,
+    type: 'movie_recommend_friend',
+    actorName: item.senderName || '친구',
+    message: item.message,
+    movieTitle: item.movie.title,
+    movie: item.movie,
+    time: '방금',
+    read: item.read || false,
+  }))
+}
+
 export async function getNotifications(category = 'all') {
   await new Promise(resolve => setTimeout(resolve, 300))
   const notifications = await Promise.all(mockNotifications.map(attachMovie))
+  const recommendationNotifications = getRecommendationNotifications()
+  const result = [...recommendationNotifications, ...notifications]
 
-  if (category === 'all') return notifications
-  return notifications
+  if (category === 'all') return result
+  return result
 }
 
 export async function markNotificationRead(id) {

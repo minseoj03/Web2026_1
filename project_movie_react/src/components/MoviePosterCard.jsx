@@ -20,10 +20,10 @@ export default function MoviePosterCard({ movie, type = 'watched', onClick, onRe
 
         <button
           onClick={(event) => { event.stopPropagation(); onRecommend?.(movie) }}
-          className="absolute top-2 left-2 w-6 h-6 bg-[#7c5cff]/85 rounded-full grid place-items-center text-white text-sm opacity-0 group-hover:opacity-100 transition hover:scale-110"
-          title="친구에게 추천"
+          className="absolute top-2 left-2 w-8 h-8 bg-[#7c5cff]/95 rounded-full grid place-items-center text-white text-[11px] font-extrabold opacity-0 group-hover:opacity-100 transition hover:scale-110 shadow-md"
+          title="친구에게 영화 추천"
         >
-          +
+          👤→
         </button>
 
         <button
