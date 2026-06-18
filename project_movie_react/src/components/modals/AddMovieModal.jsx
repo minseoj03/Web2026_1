@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import EmptyState from '../EmptyState'
 import { useToast } from '../Toast'
 import { MovieSearchRowSkeleton } from '../Skeleton'
-import { getMovieProviders, getPopularMoviesWithOtt, searchMovies } from '../../services/movieApi'
+import {
+  filterKoreanTitledMovies,
+  getMovieProviders,
+  getPopularMoviesWithOtt,
+  searchMovies,
+} from '../../services/movieApi'
 
 const genreMap = {
   28: '액션',
@@ -66,7 +71,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
       try {
         const sourceMovies = query.trim()
           ? await searchMovies(query.trim())
-          : (await getPopularMoviesWithOtt()).results
+          : filterKoreanTitledMovies((await getPopularMoviesWithOtt()).results)
 
         const withOtt = await Promise.all(
           (sourceMovies || []).slice(0, 12).map(async (movie) => ({

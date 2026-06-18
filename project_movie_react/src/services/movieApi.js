@@ -78,9 +78,14 @@ function hasKoreanDisplayTitle(movie) {
   return KOREAN_TITLE_REGEX.test(movie?.title || '')
 }
 
-function preferKoreanTitledMovies(movies) {
+export function filterKoreanTitledMovies(movies) {
+  return (movies || []).filter(hasKoreanDisplayTitle)
+}
+
+function preferKoreanTitledMovies(movies, allowForeignFallback = true) {
   const koreanTitleMovies = (movies || []).filter(hasKoreanDisplayTitle)
-  return koreanTitleMovies.length > 0 ? koreanTitleMovies : (movies || [])
+  if (koreanTitleMovies.length > 0 || !allowForeignFallback) return koreanTitleMovies
+  return movies || []
 }
 
 function withKoreanMovieParams(endpoint, page) {
@@ -101,7 +106,10 @@ async function fetchKoreanTitledMoviePages(endpoint, pages = 3) {
   }
 
   const firstResponse = responses[0] || { results: [] }
-  return { ...firstResponse, results: preferKoreanTitledMovies(results) }
+  return {
+    ...firstResponse,
+    results: preferKoreanTitledMovies(results, false),
+  }
 }
 
 async function fetchTmdb(endpoint) {
@@ -139,7 +147,7 @@ async function attachOttToMovies(movies) {
 }
 
 export async function getPopularMoviesWithOtt() {
-  const cacheKey = 'moviesWithOtt:v3-ko-title'
+  const cacheKey = 'moviesWithOtt:v4-ko-title-only'
   const cached = sessionStorage.getItem(cacheKey)
   if (cached) return JSON.parse(cached)
 
@@ -335,5 +343,6 @@ export async function searchMovies(query) {
     `/search/movie?query=${encodeURIComponent(query)}&language=ko-KR&region=KR&page=1`
   )
 
-  return preferKoreanTitledMovies(data.results || [])
+  const isKoreanQuery = KOREAN_TITLE_REGEX.test(query)
+  return preferKoreanTitledMovies(data.results || [], !isKoreanQuery)
 }
