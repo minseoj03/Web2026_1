@@ -147,6 +147,9 @@ function hydrateRecommendation(item, currentUserId) {
 export async function sendMovieRecommendation(movie, friends, message = '', senderId = DEFAULT_DEMO_USER_ID) {
   await new Promise(resolve => setTimeout(resolve, 500))
 
+  const posterPath = movie.posterPath
+    || (movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null)
+
   const recommendation = {
     id: `recommendation-${Date.now()}`,
     senderId,
@@ -156,7 +159,7 @@ export async function sendMovieRecommendation(movie, friends, message = '', send
       title: movie.title,
       genre: movie.genre || '영화',
       rating: movie.rating || '',
-      posterPath: movie.posterPath || null,
+      posterPath,
       gradient: movie.gradient || 'from-[#2d1b4e] to-[#4a3268]',
       overview: movie.overview || '',
     },

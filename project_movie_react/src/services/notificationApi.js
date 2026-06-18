@@ -57,26 +57,30 @@ async function attachMovie(notification) {
       : notification.actorName,
   }
   if (!notification.movieTitle) return hydratedNotification
+  if (notification.movie?.posterPath) return hydratedNotification
+
+  const fallbackMovie = notification.movie || notification.fallbackMovie
 
   try {
     const results = await searchMovies(notification.movieTitle)
-    const movie = results?.[0]
+    const movie = results?.find(item => item.id === notification.movie?.id) || results?.[0]
 
     if (!movie) {
       return {
         ...hydratedNotification,
-        movie: notification.fallbackMovie,
+        movie: fallbackMovie,
       }
     }
 
     return {
       ...hydratedNotification,
       movie: {
+        ...fallbackMovie,
         ...movie,
         title: movie.title || notification.movieTitle,
-        genre: notification.fallbackMovie?.genre || '영화',
-        rating: movie.vote_average ? (movie.vote_average / 2).toFixed(1) : notification.fallbackMovie?.rating,
-        gradient: notification.fallbackMovie?.gradient || 'from-[#2d1b4e] to-[#4a3268]',
+        genre: fallbackMovie?.genre || '영화',
+        rating: fallbackMovie?.rating || (movie.vote_average ? (movie.vote_average / 2).toFixed(1) : ''),
+        gradient: fallbackMovie?.gradient || 'from-[#2d1b4e] to-[#4a3268]',
         posterPath: movie.poster_path ? `https://image.tmdb.org/t/p/w200${movie.poster_path}` : null,
       },
     }
@@ -84,7 +88,7 @@ async function attachMovie(notification) {
     console.error('[Notification movie]', error)
     return {
       ...hydratedNotification,
-      movie: notification.fallbackMovie,
+      movie: fallbackMovie,
     }
   }
 }
@@ -104,8 +108,10 @@ function getRecommendationNotifications(currentUserId) {
 
 export async function getNotifications(category = 'all', currentUserId) {
   await new Promise(resolve => setTimeout(resolve, 300))
-  const notifications = await Promise.all(mockNotifications.map(attachMovie))
-  const recommendationNotifications = getRecommendationNotifications(currentUserId)
+  const [notifications, recommendationNotifications] = await Promise.all([
+    Promise.all(mockNotifications.map(attachMovie)),
+    Promise.all(getRecommendationNotifications(currentUserId).map(attachMovie)),
+  ])
   const result = [...recommendationNotifications, ...notifications]
 
   if (category === 'all') return result
