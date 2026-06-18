@@ -2,19 +2,9 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useWishlist } from '../../contexts/WishlistContext'
 import { getPersonalizedMovies } from '../../services/movieApi'
+import { HeroSkeleton } from '../Skeleton'
 
-const loadingMovie = {
-  id: 'hero-loading',
-  title: '추천 영화를 불러오는 중...',
-  originalTitle: '',
-  rating: 0,
-  releaseYear: '',
-  overview: '',
-  posterPath: null,
-  recommendScore: 0,
-  recommendReasons: ['시청 기록과 취향을 분석하고 있어요.'],
-  gradient: 'from-[#2d1b4e] to-[#4a3268]',
-}
+const loadingMovie = null
 
 function toHeroMovie(movie, index) {
   return {
@@ -40,23 +30,27 @@ function toHeroMovie(movie, index) {
 export default function HeroSection() {
   const { user } = useAuth()
   const { isWishlisted, toggleWishlist } = useWishlist()
-  const [heroMovies, setHeroMovies] = useState([loadingMovie])
+  const [heroMovies, setHeroMovies] = useState([])
   const [activeIndex, setActiveIndex] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  const heroMovie = heroMovies[activeIndex] || loadingMovie
-  const wishlisted = isWishlisted(heroMovie.id)
+  const heroMovie = heroMovies[activeIndex] || null
+  const wishlisted = heroMovie ? isWishlisted(heroMovie.id) : false
   const hasMultipleMovies = heroMovies.length > 1
 
   useEffect(() => {
     let cancelled = false
 
-    setHeroMovies([loadingMovie])
+    setHeroMovies([])
+    setLoading(true)
     setActiveIndex(0)
 
     getPersonalizedMovies(user, 3).then((movies) => {
       if (cancelled || !movies?.length) return
       setHeroMovies(movies.map(toHeroMovie))
       setActiveIndex(0)
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
     })
 
     return () => {
@@ -73,6 +67,7 @@ export default function HeroSection() {
   }
 
   return (
+    loading || !heroMovie ? <HeroSkeleton /> : (
     <section className="bg-white rounded-2xl p-7 max-md:p-5 shadow-sm overflow-hidden">
       <div className="flex items-start justify-between gap-4 mb-5 max-md:flex-col">
         <div className="min-w-0">
@@ -192,5 +187,6 @@ export default function HeroSection() {
         </div>
       </div>
     </section>
+    )
   )
 }

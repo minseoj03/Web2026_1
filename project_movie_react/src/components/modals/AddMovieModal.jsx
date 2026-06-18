@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import EmptyState from '../EmptyState'
 import { useToast } from '../Toast'
+import { MovieSearchRowSkeleton } from '../Skeleton'
 import { getMovieProviders, getPopularMoviesWithOtt, searchMovies } from '../../services/movieApi'
 
 const genreMap = {
@@ -152,7 +153,7 @@ export default function AddMovieModal({ isOpen, onClose, onAdd, type = 'watched'
 
         <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto mb-4">
           {searching ? (
-            <div className="py-8 text-center text-sm text-gray-400">검색 중...</div>
+            <MovieSearchRowSkeleton count={4} />
           ) : results.length > 0 ? (
             results.map(movie => (
               <div key={movie.id}>

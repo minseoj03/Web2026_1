@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useFriends } from '../contexts/FriendContext'
 import { getPopularMoviesWithOtt, searchMovies } from '../services/movieApi'
+import { MovieSearchRowSkeleton } from '../components/Skeleton'
 
 const authors = ['송이', '민지', '우진', '세영']
 
@@ -767,7 +768,7 @@ function AddMovieToRoomModal({ onClose, onAdd }) {
 
         <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto mb-4">
           {loading ? (
-            <p className="text-sm text-gray-400 text-center py-8">영화를 불러오는 중...</p>
+            <MovieSearchRowSkeleton count={4} />
           ) : results.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-8">검색 결과가 없어요.</p>
           ) : (

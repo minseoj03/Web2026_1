@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import MovieDetailModal from '../components/MovieDetailModal'
 import HeroSection from '../components/home/HeroSection'
 import EmotionSection from '../components/home/EmotionSection'
+import { HomeSidebarSkeleton } from '../components/Skeleton'
 import { getPopularMovies } from '../services/movieApi'
 
 const friendActivities = [
@@ -20,6 +21,7 @@ const notifications = [
 export default function Home() {
   const [selectedMovie, setSelectedMovie] = useState(null)
   const [popularMovies, setPopularMovies] = useState([])
+  const [popularLoading, setPopularLoading] = useState(true)
 
   useEffect(() => {
     getPopularMovies()
@@ -27,6 +29,7 @@ export default function Home() {
         setPopularMovies((data.results || []).slice(0, 5))
       })
       .catch(() => setPopularMovies([]))
+      .finally(() => setPopularLoading(false))
   }, [])
 
   return (
@@ -82,15 +85,27 @@ export default function Home() {
               <h3 className="text-sm font-extrabold">OTT별 인기 영화 TOP 5</h3>
               <Link to="/ott-ranking" className="text-xs text-gray-500 hover:text-[#7c5cff]">더보기 ›</Link>
             </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              {popularMovies.map((movie, index) => (
-                <div key={movie.id || index} className="flex items-center gap-2">
-                  <span className="text-sm font-extrabold w-4">{index + 1}</span>
-                  <span className="text-xs font-semibold flex-1 truncate">{movie.title}</span>
-                  <span className="text-[11px] text-gray-500">★ {movie.vote_average?.toFixed(1)}</span>
-                </div>
-              ))}
-            </div>
+            {popularLoading ? (
+              <div className="flex flex-col gap-2.5 animate-pulse">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-4 h-3 bg-gray-200 rounded shrink-0" />
+                    <div className="h-3 bg-gray-200 rounded flex-1" />
+                    <div className="w-8 h-3 bg-gray-200 rounded shrink-0" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2.5">
+                {popularMovies.map((movie, index) => (
+                  <div key={movie.id || index} className="flex items-center gap-2">
+                    <span className="text-sm font-extrabold w-4">{index + 1}</span>
+                    <span className="text-xs font-semibold flex-1 truncate">{movie.title}</span>
+                    <span className="text-[11px] text-gray-500">★ {movie.vote_average?.toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </aside>
       </div>
