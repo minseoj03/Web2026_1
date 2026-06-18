@@ -268,7 +268,7 @@ export default function VoteRoom() {
                       const isVoted = room.myVote === movie.id
 
                       return (
-                        <div key={movie.id} className="relative min-w-0 cursor-pointer hover:-translate-y-1 transition">
+                        <div key={movie.id} className="relative min-w-0 h-full flex flex-col cursor-pointer hover:-translate-y-1 transition">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie.id) }}
                             className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/60 text-white grid place-items-center text-sm hover:bg-red-500 transition"
@@ -288,9 +288,9 @@ export default function VoteRoom() {
                               {movie.title}
                             </div>
                           )}
-                          <p className="text-[13px] font-bold mb-1 truncate">{movie.title}</p>
-                          <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{movie.reason}</p>
-                          <div className="flex items-center justify-between text-[10px] mb-2">
+                          <p className="text-[13px] font-bold mb-1 truncate shrink-0">{movie.title}</p>
+                          <p className="text-[11px] text-gray-500 mb-2 line-clamp-2 min-h-[2rem] break-words">{movie.reason}</p>
+                          <div className="flex items-center justify-between text-[10px] mb-2 mt-auto">
                             <span className="text-gray-500">{movie.author}</span>
                             {movie.rating && <span className="font-semibold text-gray-500">⭐ {movie.rating}</span>}
                           </div>
